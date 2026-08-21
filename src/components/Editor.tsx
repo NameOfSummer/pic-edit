@@ -4,7 +4,9 @@ import {
   ArrowDownToLine,
   ArrowUp,
   ArrowUpToLine,
+  ClipboardCopy,
   ClipboardPaste,
+  CopyPlus,
   Crop,
   Trash2,
 } from "lucide-react";
@@ -22,11 +24,13 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
+  ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { collectClipboardImages, collectClipboardImagesFromEvent, collectImageFiles } from "@/editor/images";
 import {
+  ANNOTATION_PASTE_OFFSET,
   omitAnnotationId,
   shiftAnnotationClipboard,
   type AnnotationClipboard,
@@ -56,6 +60,7 @@ import {
   type CounterStyle,
   type CropRect,
   type EditorTool,
+  type ImageLayer,
   type MarkerStyle,
   type MosaicStyle,
   type Point,
@@ -73,6 +78,7 @@ export function Editor() {
   const contextPointRef = useRef<Point>({ x: 0, y: 0 });
   const draftRef = useRef<{ pointerId: number; x1: number; y1: number } | null>(null);
   const annotationClipboardRef = useRef<AnnotationClipboard | null>(null);
+  const layerClipboardRef = useRef<Omit<ImageLayer, "id"> | null>(null);
   const historyRef = useRef(createHistoryController());
   const gestureRef = useRef(false);
   const [historyTick, setHistoryTick] = useState(0);
@@ -81,6 +87,7 @@ export function Editor() {
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [contextTarget, setContextTarget] = useState<ContextTarget>("canvas");
   const [canPasteImage, setCanPasteImage] = useState(true);
+  const [canPasteInternal, setCanPasteInternal] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [tool, setTool] = useState<EditorTool>("select");
   const [draftArrow, setDraftArrow] = useState<DraftLine | null>(null);
@@ -121,6 +128,7 @@ export function Editor() {
     bringForward,
     sendBackward,
     removeSelected,
+    insertLayer,
     applyCrop,
     replaceAll: replaceAllLayers,
     clearAll: clearAllLayers,
@@ -222,6 +230,13 @@ export function Editor() {
   const showCounterMenu = contextTarget === "counter" && Boolean(selectedCounterId);
   const showMosaicMenu = contextTarget === "mosaic" && Boolean(selectedMosaicId);
   const showMarkerMenu = contextTarget === "marker" && Boolean(selectedMarkerId);
+  const showAnnotationMenu =
+    showArrowMenu ||
+    showRectMenu ||
+    showTextMenu ||
+    showCounterMenu ||
+    showMosaicMenu ||
+    showMarkerMenu;
   const showStrokeStyle =
     tool === "arrow" || tool === "rect" || Boolean(selectedArrow) || Boolean(selectedRect);
   const showTextStyle = tool === "text" || Boolean(selectedText);
@@ -442,15 +457,10 @@ export function Editor() {
     ],
   );
 
-  const pasteImagesAt = useCallback(
-    async (origin: Point) => {
-      const files = await collectClipboardImages(null);
-      await placeFiles(files, origin);
-    },
-    [placeFiles],
-  );
-
   const refreshCanPaste = useCallback(async () => {
+    setCanPasteInternal(
+      Boolean(annotationClipboardRef.current || layerClipboardRef.current),
+    );
     if (!navigator.clipboard?.read) {
       setCanPasteImage(true);
       return;
@@ -656,33 +666,54 @@ export function Editor() {
     ],
   );
 
+  const clearLayerClipboard = useCallback(() => {
+    if (layerClipboardRef.current) {
+      URL.revokeObjectURL(layerClipboardRef.current.src);
+      layerClipboardRef.current = null;
+    }
+  }, []);
+
   const copySelectedAnnotation = useCallback((): boolean => {
     if (selectedArrow) {
       annotationClipboardRef.current = { kind: "arrow", data: omitAnnotationId(selectedArrow) };
+      clearLayerClipboard();
       return true;
     }
     if (selectedRect) {
       annotationClipboardRef.current = { kind: "rect", data: omitAnnotationId(selectedRect) };
+      clearLayerClipboard();
       return true;
     }
     if (selectedText) {
       annotationClipboardRef.current = { kind: "text", data: omitAnnotationId(selectedText) };
+      clearLayerClipboard();
       return true;
     }
     if (selectedCounter) {
       annotationClipboardRef.current = { kind: "counter", data: omitAnnotationId(selectedCounter) };
+      clearLayerClipboard();
       return true;
     }
     if (selectedMosaic) {
       annotationClipboardRef.current = { kind: "mosaic", data: omitAnnotationId(selectedMosaic) };
+      clearLayerClipboard();
       return true;
     }
     if (selectedMarker) {
       annotationClipboardRef.current = { kind: "marker", data: omitAnnotationId(selectedMarker) };
+      clearLayerClipboard();
       return true;
     }
     return false;
-  }, [selectedArrow, selectedCounter, selectedMarker, selectedMosaic, selectedRect, selectedText]);
+  }, [
+    clearLayerClipboard,
+    selectedArrow,
+    selectedCounter,
+    selectedMarker,
+    selectedMosaic,
+    selectedRect,
+    selectedText,
+  ]);
 
   const pasteAnnotationClipboard = useCallback((): boolean => {
     const clip = annotationClipboardRef.current;
@@ -730,6 +761,111 @@ export function Editor() {
     insertRect,
     insertText,
     pushHistory,
+  ]);
+
+  const duplicateSelectedAnnotation = useCallback((): boolean => {
+    if (!copySelectedAnnotation()) {
+      return false;
+    }
+    return pasteAnnotationClipboard();
+  }, [copySelectedAnnotation, pasteAnnotationClipboard]);
+
+  const copySelectedLayer = useCallback(async (): Promise<boolean> => {
+    if (!selectedLayer) {
+      return false;
+    }
+    const blob = await fetch(selectedLayer.src).then((response) => response.blob());
+    const src = URL.createObjectURL(blob);
+    if (layerClipboardRef.current) {
+      URL.revokeObjectURL(layerClipboardRef.current.src);
+    }
+    layerClipboardRef.current = { ...omitAnnotationId(selectedLayer), src };
+    annotationClipboardRef.current = null;
+    return true;
+  }, [selectedLayer]);
+
+  const pasteLayerClipboard = useCallback(async (): Promise<boolean> => {
+    const clip = layerClipboardRef.current;
+    if (!clip) {
+      return false;
+    }
+    const shifted: Omit<ImageLayer, "id"> = {
+      ...clip,
+      x: clip.x + ANNOTATION_PASTE_OFFSET,
+      y: clip.y + ANNOTATION_PASTE_OFFSET,
+    };
+    layerClipboardRef.current = shifted;
+    const blob = await fetch(shifted.src).then((response) => response.blob());
+    const src = URL.createObjectURL(blob);
+    pushHistory();
+    setTool("select");
+    setEditingTextId(null);
+    clearArrowSelection();
+    clearRectSelection();
+    clearTextSelection();
+    clearCounterSelection();
+    clearMosaicSelection();
+    clearMarkerSelection();
+    insertLayer({ ...shifted, src });
+    return true;
+  }, [
+    clearArrowSelection,
+    clearCounterSelection,
+    clearMarkerSelection,
+    clearMosaicSelection,
+    clearRectSelection,
+    clearTextSelection,
+    insertLayer,
+    pushHistory,
+  ]);
+
+  const duplicateSelectedLayer = useCallback(async (): Promise<boolean> => {
+    if (!(await copySelectedLayer())) {
+      return false;
+    }
+    return pasteLayerClipboard();
+  }, [copySelectedLayer, pasteLayerClipboard]);
+
+  const removeContextAnnotation = useCallback(() => {
+    pushHistory();
+    if (selectedArrowId) {
+      removeSelectedArrow();
+      return;
+    }
+    if (selectedRectId) {
+      removeSelectedRect();
+      return;
+    }
+    if (selectedTextId) {
+      removeSelectedText();
+      setEditingTextId(null);
+      return;
+    }
+    if (selectedCounterId) {
+      removeSelectedCounter();
+      return;
+    }
+    if (selectedMosaicId) {
+      removeSelectedMosaic();
+      return;
+    }
+    if (selectedMarkerId) {
+      removeSelectedMarker();
+    }
+  }, [
+    pushHistory,
+    removeSelectedArrow,
+    removeSelectedCounter,
+    removeSelectedMarker,
+    removeSelectedMosaic,
+    removeSelectedRect,
+    removeSelectedText,
+    selectedArrowId,
+    selectedCounterId,
+    selectedMarkerId,
+    selectedMosaicId,
+    selectedRectId,
+    selectedTextId,
   ]);
 
   const onDrawPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -840,6 +976,12 @@ export function Editor() {
 
       if (pasteAnnotationClipboard()) {
         event.preventDefault();
+        return;
+      }
+
+      if (layerClipboardRef.current) {
+        event.preventDefault();
+        void pasteLayerClipboard();
       }
     };
 
@@ -894,6 +1036,11 @@ export function Editor() {
         if (key === "c" && !cropping) {
           if (copySelectedAnnotation()) {
             event.preventDefault();
+            return;
+          }
+          if (selectedLayer) {
+            event.preventDefault();
+            void copySelectedLayer();
           }
           return;
         }
@@ -958,10 +1105,12 @@ export function Editor() {
     clearAllSelections,
     confirmCrop,
     copySelectedAnnotation,
+    copySelectedLayer,
     cropping,
     editingTextId,
     exitCrop,
     pasteAnnotationClipboard,
+    pasteLayerClipboard,
     placeFiles,
     pushHistory,
     redo,
@@ -975,6 +1124,7 @@ export function Editor() {
     selectedArrowId,
     selectedCounterId,
     selectedId,
+    selectedLayer,
     selectedMarkerId,
     selectedMosaicId,
     selectedRectId,
@@ -1497,106 +1647,48 @@ export function Editor() {
 
       <ContextMenuContent className="w-52">
         <ContextMenuItem
-          disabled={!canPasteImage}
+          disabled={!canPasteImage && !canPasteInternal}
           onSelect={() => {
-            void pasteImagesAt(contextPointRef.current);
+            void (async () => {
+              if (canPasteImage) {
+                const files = await collectClipboardImages(null);
+                if (files.length > 0) {
+                  await placeFiles(files, contextPointRef.current);
+                  return;
+                }
+              }
+              if (await pasteLayerClipboard()) {
+                return;
+              }
+              pasteAnnotationClipboard();
+            })();
           }}
         >
           <ClipboardPaste />
           貼り付け
         </ContextMenuItem>
 
-        {showArrowMenu && (
+        {showAnnotationMenu && (
           <>
-            <ContextMenuSeparator />
             <ContextMenuItem
-              variant="destructive"
               onSelect={() => {
-                pushHistory();
-                removeSelectedArrow();
+                copySelectedAnnotation();
               }}
             >
-              <Trash2 />
-              削除
+              <ClipboardCopy />
+              コピー
+              <ContextMenuShortcut>⌘C</ContextMenuShortcut>
             </ContextMenuItem>
-          </>
-        )}
-
-        {showRectMenu && (
-          <>
-            <ContextMenuSeparator />
             <ContextMenuItem
-              variant="destructive"
               onSelect={() => {
-                pushHistory();
-                removeSelectedRect();
+                duplicateSelectedAnnotation();
               }}
             >
-              <Trash2 />
-              削除
+              <CopyPlus />
+              複製
             </ContextMenuItem>
-          </>
-        )}
-
-        {showTextMenu && (
-          <>
             <ContextMenuSeparator />
-            <ContextMenuItem
-              variant="destructive"
-              onSelect={() => {
-                pushHistory();
-                removeSelectedText();
-                setEditingTextId(null);
-              }}
-            >
-              <Trash2 />
-              削除
-            </ContextMenuItem>
-          </>
-        )}
-
-        {showCounterMenu && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              variant="destructive"
-              onSelect={() => {
-                pushHistory();
-                removeSelectedCounter();
-              }}
-            >
-              <Trash2 />
-              削除
-            </ContextMenuItem>
-          </>
-        )}
-
-        {showMosaicMenu && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              variant="destructive"
-              onSelect={() => {
-                pushHistory();
-                removeSelectedMosaic();
-              }}
-            >
-              <Trash2 />
-              削除
-            </ContextMenuItem>
-          </>
-        )}
-
-        {showMarkerMenu && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              variant="destructive"
-              onSelect={() => {
-                pushHistory();
-                removeSelectedMarker();
-              }}
-            >
+            <ContextMenuItem variant="destructive" onSelect={removeContextAnnotation}>
               <Trash2 />
               削除
             </ContextMenuItem>
@@ -1605,6 +1697,25 @@ export function Editor() {
 
         {showLayerOrder && selectedId && (
           <>
+            <ContextMenuItem
+              disabled={cropping}
+              onSelect={() => {
+                void copySelectedLayer();
+              }}
+            >
+              <ClipboardCopy />
+              コピー
+              <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+            </ContextMenuItem>
+            <ContextMenuItem
+              disabled={cropping}
+              onSelect={() => {
+                void duplicateSelectedLayer();
+              }}
+            >
+              <CopyPlus />
+              複製
+            </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem
               disabled={cropping}
