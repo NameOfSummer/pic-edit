@@ -92,6 +92,13 @@ export function useLayers() {
     setSelectedId(null);
   }, [selectedId]);
 
+  const insertLayer = useCallback((data: Omit<ImageLayer, "id">) => {
+    const next: ImageLayer = { ...data, id: crypto.randomUUID() };
+    setLayers((current) => [...current, next]);
+    setSelectedId(next.id);
+    return next.id;
+  }, []);
+
   const applyCrop = useCallback(
     async (crop: CropRect) => {
       const target = layersRef.current.find((layer) => layer.id === selectedId);
@@ -161,6 +168,7 @@ export function useLayers() {
     bringForward,
     sendBackward,
     removeSelected,
+    insertLayer,
     applyCrop,
     replaceAll,
     clearAll,
