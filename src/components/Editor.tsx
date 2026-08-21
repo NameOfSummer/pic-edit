@@ -955,6 +955,21 @@ export function Editor() {
     };
   }, []);
 
+  // キャンバスに内容があるとき、リロード・タブ閉じを確認する（文言はブラウザ固定）
+  useEffect(() => {
+    if (!canExport) {
+      return;
+    }
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [canExport]);
+
   useEffect(() => {
     const isTypingTarget = (target: EventTarget | null) =>
       target instanceof HTMLInputElement ||
