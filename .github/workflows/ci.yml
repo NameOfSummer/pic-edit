@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ignore-scripts=true のため、ビルドに必要な esbuild だけ明示的に再構築する
+      - name: Rebuild esbuild
+        run: npm run rebuild:esbuild
+
+      - name: Audit
+        run: npm audit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck & build
+        run: npm run build

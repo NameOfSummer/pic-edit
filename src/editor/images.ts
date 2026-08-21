@@ -1,4 +1,4 @@
-import type { ImageLayer, Point } from "./types";
+import type { CropRect, ImageLayer, Point } from "./types";
 
 const IMAGE_TYPES = new Set([
   "image/png",
@@ -47,14 +47,9 @@ export function collectImageFiles(files: FileList | File[] | DataTransferItemLis
 }
 
 export async function collectClipboardImages(clipboardData: DataTransfer | null): Promise<File[]> {
-  const fromItems = collectImageFiles(clipboardData?.items ?? null);
-  if (fromItems.length > 0) {
-    return fromItems;
-  }
-
-  const fromFiles = collectImageFiles(clipboardData?.files ?? null);
-  if (fromFiles.length > 0) {
-    return fromFiles;
+  const fromEvent = collectClipboardImagesFromEvent(clipboardData);
+  if (fromEvent.length > 0) {
+    return fromEvent;
   }
 
   if (!navigator.clipboard?.read) {
@@ -79,7 +74,16 @@ export async function collectClipboardImages(clipboardData: DataTransfer | null)
   }
 }
 
-function loadHtmlImage(src: string): Promise<HTMLImageElement> {
+/** paste イベントの DataTransfer だけを見る（システムクリップボードの古い画像は拾わない） */
+export function collectClipboardImagesFromEvent(clipboardData: DataTransfer | null): File[] {
+  const fromItems = collectImageFiles(clipboardData?.items ?? null);
+  if (fromItems.length > 0) {
+    return fromItems;
+  }
+  return collectImageFiles(clipboardData?.files ?? null);
+}
+
+export function loadHtmlImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
@@ -98,6 +102,52 @@ export function fitSize(
   return {
     width: Math.max(1, Math.round(naturalWidth * scale)),
     height: Math.max(1, Math.round(naturalHeight * scale)),
+  };
+}
+
+async function canvasToObjectUrl(canvas: HTMLCanvasElement): Promise<string> {
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((result) => {
+      if (result) {
+        resolve(result);
+      } else {
+        reject(new Error("画像の書き出しに失敗しました"));
+      }
+    }, "image/png");
+  });
+  return URL.createObjectURL(blob);
+}
+
+/** 表示矩形上の crop を元画像座標に写し、切り出した画像を返す */
+export async function cropImageSrc(
+  layer: ImageLayer,
+  crop: CropRect,
+): Promise<{ src: string; naturalWidth: number; naturalHeight: number; width: number; height: number }> {
+  const image = await loadHtmlImage(layer.src);
+  const scaleX = layer.naturalWidth / layer.width;
+  const scaleY = layer.naturalHeight / layer.height;
+
+  const sourceX = Math.max(0, Math.round(crop.x * scaleX));
+  const sourceY = Math.max(0, Math.round(crop.y * scaleY));
+  const sourceWidth = Math.max(1, Math.round(crop.width * scaleX));
+  const sourceHeight = Math.max(1, Math.round(crop.height * scaleY));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = sourceWidth;
+  canvas.height = sourceHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Canvas を初期化できませんでした");
+  }
+
+  ctx.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+
+  return {
+    src: await canvasToObjectUrl(canvas),
+    naturalWidth: sourceWidth,
+    naturalHeight: sourceHeight,
+    width: Math.max(1, Math.round(crop.width)),
+    height: Math.max(1, Math.round(crop.height)),
   };
 }
 
@@ -120,6 +170,9 @@ export async function filesToLayers(files: File[], origin: Point, viewport: Poin
       y: Math.round(origin.y - size.height / 2 + offset),
       width: size.width,
       height: size.height,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      rotation: 0,
     });
   }
 
