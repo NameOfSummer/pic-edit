@@ -1,3 +1,6 @@
+import { ColorPickerButton } from "@/components/ColorPickerButton";
+import { StyleFieldLabel } from "@/components/StyleFieldLabel";
+import { isPresetColor } from "@/lib/color";
 import { ANNOTATION_COLORS, ANNOTATION_STROKE_WIDTHS, type AnnotationStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +11,12 @@ type Props = {
 };
 
 export function AnnotationStyleControls({ style, onChange, label = "注釈" }: Props) {
+  const customColor = !isPresetColor(style.color, ANNOTATION_COLORS);
+
   return (
     <div className="flex items-center gap-3" onPointerDown={(event) => event.stopPropagation()}>
       <div className="flex items-center gap-1.5" role="group" aria-label={`${label}の色`}>
+        <StyleFieldLabel>{label}</StyleFieldLabel>
         {ANNOTATION_COLORS.map((color) => {
           const selected = style.color.toLowerCase() === color.toLowerCase();
           return (
@@ -31,11 +37,18 @@ export function AnnotationStyleControls({ style, onChange, label = "注釈" }: P
             />
           );
         })}
+        <ColorPickerButton
+          value={style.color}
+          active={customColor}
+          label={`${label}の自由な色`}
+          onChange={(color) => onChange({ color })}
+        />
       </div>
 
       <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
 
-      <div className="flex items-center gap-1" role="group" aria-label={`${label}の太さ`}>
+      <div className="flex items-center gap-1.5" role="group" aria-label={`${label}の太さ`}>
+        <StyleFieldLabel>太さ</StyleFieldLabel>
         {ANNOTATION_STROKE_WIDTHS.map((width) => {
           const selected = style.strokeWidth === width;
           return (

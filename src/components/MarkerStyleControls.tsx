@@ -1,3 +1,6 @@
+import { ColorPickerButton } from "@/components/ColorPickerButton";
+import { StyleFieldLabel } from "@/components/StyleFieldLabel";
+import { isPresetColor } from "@/lib/color";
 import { MARKER_COLORS, MARKER_STROKE_WIDTHS, type MarkerStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
@@ -7,9 +10,12 @@ type Props = {
 };
 
 export function MarkerStyleControls({ style, onChange }: Props) {
+  const customColor = !isPresetColor(style.color, MARKER_COLORS);
+
   return (
     <div className="flex flex-wrap items-center gap-3" onPointerDown={(event) => event.stopPropagation()}>
       <div className="flex items-center gap-1.5" role="group" aria-label="マーカーの色">
+        <StyleFieldLabel>色</StyleFieldLabel>
         {MARKER_COLORS.map((color) => {
           const selected = style.color.toLowerCase() === color.toLowerCase();
           return (
@@ -28,11 +34,18 @@ export function MarkerStyleControls({ style, onChange }: Props) {
             />
           );
         })}
+        <ColorPickerButton
+          value={style.color}
+          active={customColor}
+          label="マーカーの自由な色"
+          onChange={(color) => onChange({ color })}
+        />
       </div>
 
       <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
 
-      <div className="flex items-center gap-1" role="group" aria-label="マーカーの太さ">
+      <div className="flex items-center gap-1.5" role="group" aria-label="マーカーの太さ">
+        <StyleFieldLabel>太さ</StyleFieldLabel>
         {MARKER_STROKE_WIDTHS.map((width) => {
           const selected = style.strokeWidth === width;
           return (

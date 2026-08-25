@@ -1,5 +1,6 @@
 import { useRef, type PointerEvent } from "react";
 import { RotateCw } from "lucide-react";
+import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
 import type { ImageLayer, LayerPatch } from "@/editor/types";
 
 type Props = {
@@ -118,7 +119,7 @@ export function SelectionChrome({ layer, onChange }: Props) {
         top: layer.y,
         width: layer.width,
         height: layer.height,
-        zIndex: 5000,
+        zIndex: SELECTION_CHROME_Z,
         transform: `rotate(${layer.rotation}deg)`,
         transformOrigin: "center center",
       }}

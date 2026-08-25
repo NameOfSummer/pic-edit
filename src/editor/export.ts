@@ -24,6 +24,16 @@ export type Bounds = {
   maxY: number;
 };
 
+export type SceneDocument = {
+  layers: ImageLayer[];
+  arrows?: ArrowAnnotation[];
+  rects?: RectAnnotation[];
+  texts?: TextAnnotation[];
+  counters?: CounterAnnotation[];
+  mosaics?: MosaicAnnotation[];
+  markers?: MarkerAnnotation[];
+};
+
 function rotatedCorners(layer: ImageLayer): Array<{ x: number; y: number }> {
   const cx = layer.x + layer.width / 2;
   const cy = layer.y + layer.height / 2;
@@ -180,22 +190,43 @@ function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   });
 }
 
-/** 市松模様は描画せず、透明背景・元解像度相当の PNG を生成する */
-export async function renderLayersToPngBlob(
-  layers: ImageLayer[],
-  arrows: ArrowAnnotation[] = [],
-  rects: RectAnnotation[] = [],
-  texts: TextAnnotation[] = [],
-  counters: CounterAnnotation[] = [],
-  mosaics: MosaicAnnotation[] = [],
-  markers: MarkerAnnotation[] = [],
-): Promise<Blob> {
-  const bounds = getExportBounds(layers, arrows, rects, texts, counters, mosaics, markers);
+function normalizeScene(doc: SceneDocument) {
+  return {
+    layers: doc.layers,
+    arrows: doc.arrows ?? [],
+    rects: doc.rects ?? [],
+    texts: doc.texts ?? [],
+    counters: doc.counters ?? [],
+    mosaics: doc.mosaics ?? [],
+    markers: doc.markers ?? [],
+  };
+}
+
+/**
+ * 画面表示と同じ重ね順でシーンをオフスクリーン合成する。
+ * 市松は描かず透明背景。
+ */
+export async function renderSceneToCanvas(
+  doc: SceneDocument,
+  options: { scale?: number; padding?: number } = {},
+): Promise<{ canvas: HTMLCanvasElement; bounds: Bounds } | null> {
+  const scene = normalizeScene(doc);
+  const padding = options.padding ?? EXPORT_PADDING_PX;
+  const bounds = getExportBounds(
+    scene.layers,
+    scene.arrows,
+    scene.rects,
+    scene.texts,
+    scene.counters,
+    scene.mosaics,
+    scene.markers,
+    padding,
+  );
   if (!bounds) {
-    throw new Error("書き出す画像がありません");
+    return null;
   }
 
-  const scale = getExportScale(layers);
+  const scale = options.scale ?? getExportScale(scene.layers);
   const width = Math.max(1, Math.round((bounds.maxX - bounds.minX) * scale));
   const height = Math.max(1, Math.round((bounds.maxY - bounds.minY) * scale));
   const canvas = document.createElement("canvas");
@@ -210,11 +241,11 @@ export async function renderLayersToPngBlob(
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
-  if ((texts.length > 0 || counters.length > 0) && "fonts" in document) {
+  if ((scene.texts.length > 0 || scene.counters.length > 0) && "fonts" in document) {
     await document.fonts.ready;
   }
 
-  for (const layer of layers) {
+  for (const layer of scene.layers) {
     const image = await loadHtmlImage(layer.src);
     const centerX = (layer.x + layer.width / 2 - bounds.minX) * scale;
     const centerY = (layer.y + layer.height / 2 - bounds.minY) * scale;
@@ -228,31 +259,47 @@ export async function renderLayersToPngBlob(
     ctx.restore();
   }
 
-  for (const mosaic of mosaics) {
+  // Editor の DOM 重ね順に合わせる（下→上）
+  for (const mosaic of scene.mosaics) {
     drawMosaicOnCanvas(ctx, mosaic, bounds.minX, bounds.minY, scale);
   }
-
-  for (const marker of markers) {
+  for (const arrow of scene.arrows) {
+    drawArrowOnCanvas(ctx, arrow, bounds.minX, bounds.minY, scale);
+  }
+  for (const rect of scene.rects) {
+    drawRectOnCanvas(ctx, rect, bounds.minX, bounds.minY, scale);
+  }
+  for (const text of scene.texts) {
+    drawTextOnCanvas(ctx, text, bounds.minX, bounds.minY, scale);
+  }
+  for (const counter of scene.counters) {
+    drawCounterOnCanvas(ctx, counter, bounds.minX, bounds.minY, scale);
+  }
+  for (const marker of scene.markers) {
     drawMarkerOnCanvas(ctx, marker, bounds.minX, bounds.minY, scale);
   }
 
-  for (const rect of rects) {
-    drawRectOnCanvas(ctx, rect, bounds.minX, bounds.minY, scale);
-  }
+  return { canvas, bounds };
+}
 
-  for (const arrow of arrows) {
-    drawArrowOnCanvas(ctx, arrow, bounds.minX, bounds.minY, scale);
+/** 市松模様は描画せず、透明背景・元解像度相当の PNG を生成する */
+export async function renderLayersToPngBlob(
+  layers: ImageLayer[],
+  arrows: ArrowAnnotation[] = [],
+  rects: RectAnnotation[] = [],
+  texts: TextAnnotation[] = [],
+  counters: CounterAnnotation[] = [],
+  mosaics: MosaicAnnotation[] = [],
+  markers: MarkerAnnotation[] = [],
+): Promise<Blob> {
+  const rendered = await renderSceneToCanvas(
+    { layers, arrows, rects, texts, counters, mosaics, markers },
+    { scale: getExportScale(layers), padding: EXPORT_PADDING_PX },
+  );
+  if (!rendered) {
+    throw new Error("書き出す画像がありません");
   }
-
-  for (const text of texts) {
-    drawTextOnCanvas(ctx, text, bounds.minX, bounds.minY, scale);
-  }
-
-  for (const counter of counters) {
-    drawCounterOnCanvas(ctx, counter, bounds.minX, bounds.minY, scale);
-  }
-
-  return canvasToPngBlob(canvas);
+  return canvasToPngBlob(rendered.canvas);
 }
 
 export function formatExportFilename(date = new Date()): string {

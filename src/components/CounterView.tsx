@@ -1,4 +1,5 @@
 import { useEffect, useRef, type PointerEvent } from "react";
+import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
 import { counterLabelColor } from "@/editor/counterGeometry";
 import { TEXT_FONT_FAMILY, type CounterAnnotation, type CounterPatch } from "@/editor/types";
 import { cn } from "@/lib/utils";
@@ -87,7 +88,7 @@ export function CounterView({ counter, selected, interactive, onSelect, onChange
         top: counter.y - radius,
         width: counter.size,
         height: counter.size,
-        zIndex: 3980,
+        zIndex: selected && interactive ? SELECTION_CHROME_Z - 1 : 3980,
         backgroundColor: counter.color,
         color: labelColor,
         fontFamily: TEXT_FONT_FAMILY,

@@ -10,15 +10,21 @@ import {
   Crop,
   Trash2,
 } from "lucide-react";
+import { ArrowSelectionChrome } from "@/components/ArrowSelectionChrome";
 import { ArrowView } from "@/components/ArrowView";
+import { BoxSelectionChrome } from "@/components/BoxSelectionChrome";
 import { CounterView } from "@/components/CounterView";
+import { EyedropperOverlay } from "@/components/EyedropperOverlay";
 import { LayerImage } from "@/components/LayerImage";
+import { MarkerSelectionChrome } from "@/components/MarkerSelectionChrome";
 import { MarkerView } from "@/components/MarkerView";
 import { MosaicView } from "@/components/MosaicView";
 import { RectView } from "@/components/RectView";
 import { SelectionChrome } from "@/components/SelectionChrome";
 import { TextView } from "@/components/TextView";
 import { Toolbar } from "@/components/Toolbar";
+import { EyedropperContext } from "@/editor/EyedropperContext";
+import { createSceneColorSampler, type SceneColorSampler } from "@/editor/eyedropper";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -38,6 +44,7 @@ import {
 import { copyLayersAsPng, downloadLayersAsPng } from "@/editor/export";
 import { createHistoryController, type EditorSnapshot } from "@/editor/history";
 import { normalizeRectFromDrag } from "@/editor/rectGeometry";
+import { getTextBoxSize, MIN_TEXT_BOX_HEIGHT, MIN_TEXT_BOX_WIDTH } from "@/editor/textGeometry";
 import { useArrows } from "@/editor/useArrows";
 import { useCounters } from "@/editor/useCounters";
 import { useLayers } from "@/editor/useLayers";
@@ -53,6 +60,7 @@ import {
   DEFAULT_MARKER_COLOR,
   DEFAULT_MARKER_STROKE,
   DEFAULT_MOSAIC_BLOCK,
+  DEFAULT_TEXT_BACKGROUND,
   DEFAULT_TEXT_COLOR,
   DEFAULT_TEXT_SIZE,
   DEFAULT_TEXT_WEIGHT,
@@ -100,6 +108,7 @@ export function Editor() {
   });
   const [textStyle, setTextStyle] = useState<TextStyle>({
     color: DEFAULT_TEXT_COLOR,
+    backgroundColor: DEFAULT_TEXT_BACKGROUND,
     fontSize: DEFAULT_TEXT_SIZE,
     fontWeight: DEFAULT_TEXT_WEIGHT,
   });
@@ -115,6 +124,12 @@ export function Editor() {
     strokeWidth: DEFAULT_MARKER_STROKE,
   });
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [eyedropperSession, setEyedropperSession] = useState<{
+    sampler: SceneColorSampler;
+    onPick: (color: string) => void;
+    preview: string | null;
+  } | null>(null);
+  const eyedropperBusyRef = useRef(false);
 
   const {
     layers,
@@ -251,6 +266,7 @@ export function Editor() {
   const activeTextStyle: TextStyle = selectedText
     ? {
         color: selectedText.color,
+        backgroundColor: selectedText.backgroundColor ?? DEFAULT_TEXT_BACKGROUND,
         fontSize: selectedText.fontSize,
         fontWeight: selectedText.fontWeight,
       }
@@ -530,6 +546,36 @@ export function Editor() {
     await applyCrop(crop);
     exitCrop();
   }, [applyCrop, crop, exitCrop, pushHistory]);
+
+  const cancelEyedropper = useCallback(() => {
+    setEyedropperSession(null);
+  }, []);
+
+  const startEyedropper = useCallback(
+    (onPick: (color: string) => void) => {
+      if (eyedropperBusyRef.current) {
+        return;
+      }
+      eyedropperBusyRef.current = true;
+      void (async () => {
+        try {
+          const doc = docRef.current;
+          const sampler = await createSceneColorSampler(doc);
+          if (!sampler) {
+            toast.error("色を取得できる画像や注釈がありません", { position: "top-right" });
+            return;
+          }
+          setEyedropperSession({ sampler, onPick, preview: null });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "スポイトの準備に失敗しました";
+          toast.error(message, { position: "top-right" });
+        } finally {
+          eyedropperBusyRef.current = false;
+        }
+      })();
+    },
+    [],
+  );
 
   const runExport = useCallback(
     async (action: "download" | "copy") => {
@@ -1156,6 +1202,7 @@ export function Editor() {
     : null;
 
   return (
+    <EyedropperContext.Provider value={{ startEyedropper }}>
     <ContextMenu
       onOpenChange={(open) => {
         if (open) {
@@ -1509,7 +1556,6 @@ export function Editor() {
                 color: annotationStyle.color,
                 strokeWidth: annotationStyle.strokeWidth,
               }}
-              selected={false}
               interactive={false}
               onSelect={() => undefined}
               onChange={() => undefined}
@@ -1525,7 +1571,6 @@ export function Editor() {
                 color: annotationStyle.color,
                 strokeWidth: annotationStyle.strokeWidth,
               }}
-              selected={false}
               interactive={false}
               onSelect={() => undefined}
               onChange={() => undefined}
@@ -1541,7 +1586,6 @@ export function Editor() {
                 blockSize: mosaicStyle.blockSize,
               }}
               layers={[]}
-              selected={false}
               interactive={false}
               onSelect={() => undefined}
               onChange={() => undefined}
@@ -1556,10 +1600,73 @@ export function Editor() {
                 color: markerStyle.color,
                 strokeWidth: markerStyle.strokeWidth,
               }}
-              selected={false}
               interactive={false}
               onSelect={() => undefined}
               onChange={() => undefined}
+            />
+          )}
+
+          {tool === "select" && !cropping && selectedRect && (
+            <BoxSelectionChrome
+              x={selectedRect.x}
+              y={selectedRect.y}
+              width={selectedRect.width}
+              height={selectedRect.height}
+              rotation={selectedRect.rotation}
+              onChange={(patch) => {
+                beginGesture();
+                updateRect(selectedRect.id, patch);
+              }}
+            />
+          )}
+
+          {tool === "select" && !cropping && selectedText && !editingTextId && (
+            <BoxSelectionChrome
+              x={selectedText.x}
+              y={selectedText.y}
+              width={getTextBoxSize(selectedText).width}
+              height={getTextBoxSize(selectedText).height}
+              rotation={selectedText.rotation}
+              minWidth={MIN_TEXT_BOX_WIDTH}
+              minHeight={MIN_TEXT_BOX_HEIGHT}
+              onChange={(patch) => {
+                beginGesture();
+                updateText(selectedText.id, patch);
+              }}
+            />
+          )}
+
+          {tool === "select" && !cropping && selectedMosaic && (
+            <BoxSelectionChrome
+              x={selectedMosaic.x}
+              y={selectedMosaic.y}
+              width={selectedMosaic.width}
+              height={selectedMosaic.height}
+              rotation={selectedMosaic.rotation}
+              onChange={(patch) => {
+                beginGesture();
+                updateMosaic(selectedMosaic.id, patch);
+              }}
+            />
+          )}
+
+          {tool === "select" && !cropping && selectedArrow && (
+            <ArrowSelectionChrome
+              arrow={selectedArrow}
+              onChange={(patch) => {
+                beginGesture();
+                updateArrow(selectedArrow.id, patch);
+              }}
+            />
+          )}
+
+          {tool === "select" && !cropping && selectedMarker && (
+            <MarkerSelectionChrome
+              marker={selectedMarker}
+              onChange={(patch) => {
+                beginGesture();
+                updateMarker(selectedMarker.id, patch);
+              }}
             />
           )}
 
@@ -1797,6 +1904,23 @@ export function Editor() {
         )}
       </ContextMenuContent>
     </ContextMenu>
+    {eyedropperSession && (
+      <EyedropperOverlay
+        sampler={eyedropperSession.sampler}
+        previewColor={eyedropperSession.preview}
+        onPreview={(color) => {
+          setEyedropperSession((current) =>
+            current ? { ...current, preview: color } : current,
+          );
+        }}
+        onPick={(color) => {
+          eyedropperSession.onPick(color);
+          setEyedropperSession(null);
+        }}
+        onCancel={cancelEyedropper}
+      />
+    )}
+    </EyedropperContext.Provider>
   );
 }
 
