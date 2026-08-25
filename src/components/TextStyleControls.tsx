@@ -3,7 +3,6 @@ import { StyleFieldLabel } from "@/components/StyleFieldLabel";
 import { isPresetColor } from "@/lib/color";
 import {
   ANNOTATION_COLORS,
-  DEFAULT_TEXT_BACKGROUND,
   TEXT_FONT_SIZES,
   isTransparentBackground,
   type TextStyle,
@@ -74,7 +73,7 @@ export function TextStyleControls({ style, onChange }: Props) {
             "relative size-6 overflow-hidden rounded-full border-2 transition-transform duration-100 enabled:active:scale-90",
             backgroundTransparent ? "border-black scale-110" : "border-[var(--border)] hover:border-black",
           )}
-          onClick={() => onChange({ backgroundColor: DEFAULT_TEXT_BACKGROUND })}
+          onClick={() => onChange({ backgroundColor: "transparent" })}
         >
           <span className="absolute inset-0 bg-white" />
           <span className="absolute inset-0 bg-[linear-gradient(to_top_right,transparent_calc(50%-1px),#e11d48_calc(50%-1px),#e11d48_calc(50%+1px),transparent_calc(50%+1px))]" />

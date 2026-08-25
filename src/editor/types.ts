@@ -101,9 +101,9 @@ export type TextStyle = {
   fontWeight: "normal" | "bold";
 };
 
-export const TEXT_FONT_FAMILY = 'Meiryo, "メイリオ", sans-serif';
+export const TEXT_FONT_FAMILY = '"LINE Seed JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif';
 export const DEFAULT_TEXT_COLOR = "#32CD32";
-export const DEFAULT_TEXT_BACKGROUND = "transparent";
+export const DEFAULT_TEXT_BACKGROUND = "#FFFFFF";
 export const DEFAULT_TEXT_SIZE = 32;
 export const DEFAULT_TEXT_WEIGHT: TextStyle["fontWeight"] = "bold";
 export const TEXT_FONT_SIZES = [16, 24, 32, 48, 64] as const;
