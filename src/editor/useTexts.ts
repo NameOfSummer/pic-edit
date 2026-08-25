@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
+import { measureTextBox } from "./textGeometry";
 import {
+  DEFAULT_TEXT_BACKGROUND,
   DEFAULT_TEXT_COLOR,
   DEFAULT_TEXT_CONTENT,
   DEFAULT_TEXT_SIZE,
@@ -15,14 +17,20 @@ export function useTexts() {
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
 
   const addText = useCallback((origin: Point, style?: Partial<TextStyle>, content = DEFAULT_TEXT_CONTENT) => {
+    const fontSize = style?.fontSize ?? DEFAULT_TEXT_SIZE;
+    const fontWeight = style?.fontWeight ?? DEFAULT_TEXT_WEIGHT;
+    const box = measureTextBox({ text: content, fontSize, fontWeight });
     const draft: TextAnnotation = {
       id: crypto.randomUUID(),
       x: Math.round(origin.x),
       y: Math.round(origin.y),
+      width: box.width,
+      height: box.height,
       text: content,
-      fontSize: style?.fontSize ?? DEFAULT_TEXT_SIZE,
-      fontWeight: style?.fontWeight ?? DEFAULT_TEXT_WEIGHT,
+      fontSize,
+      fontWeight,
       color: style?.color ?? DEFAULT_TEXT_COLOR,
+      backgroundColor: style?.backgroundColor ?? DEFAULT_TEXT_BACKGROUND,
       rotation: 0,
     };
     setTexts((current) => [...current, draft]);
@@ -31,7 +39,14 @@ export function useTexts() {
   }, []);
 
   const insertText = useCallback((data: Omit<TextAnnotation, "id">) => {
-    const draft: TextAnnotation = { ...data, id: crypto.randomUUID() };
+    const measured = measureTextBox(data);
+    const draft: TextAnnotation = {
+      ...data,
+      width: data.width > 0 ? data.width : measured.width,
+      height: data.height > 0 ? data.height : measured.height,
+      backgroundColor: data.backgroundColor ?? DEFAULT_TEXT_BACKGROUND,
+      id: crypto.randomUUID(),
+    };
     setTexts((current) => [...current, draft]);
     setSelectedTextId(draft.id);
     return draft.id;
@@ -58,7 +73,12 @@ export function useTexts() {
   }, []);
 
   const replaceAll = useCallback((next: TextAnnotation[]) => {
-    setTexts(next.map((item) => ({ ...item })));
+    setTexts(
+      next.map((item) => ({
+        ...item,
+        backgroundColor: item.backgroundColor ?? DEFAULT_TEXT_BACKGROUND,
+      })),
+    );
     setSelectedTextId(null);
   }, []);
 

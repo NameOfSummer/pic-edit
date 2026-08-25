@@ -1,3 +1,4 @@
+import { StyleFieldLabel } from "@/components/StyleFieldLabel";
 import { MOSAIC_BLOCK_SIZES, type MosaicStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +9,13 @@ type Props = {
 
 export function MosaicStyleControls({ style, onChange }: Props) {
   return (
-    <div className="flex items-center gap-1" onPointerDown={(event) => event.stopPropagation()} role="group" aria-label="モザイクの粗さ">
+    <div
+      className="flex items-center gap-1.5"
+      onPointerDown={(event) => event.stopPropagation()}
+      role="group"
+      aria-label="モザイクの粗さ"
+    >
+      <StyleFieldLabel>粗さ</StyleFieldLabel>
       {MOSAIC_BLOCK_SIZES.map((size) => {
         const selected = style.blockSize === size;
         return (

@@ -65,29 +65,57 @@ export type TextAnnotation = {
   id: string;
   x: number;
   y: number;
+  /** テキストボックス幅（px）。フォントサイズとは独立 */
+  width: number;
+  /** テキストボックス高さ（px）。フォントサイズとは独立 */
+  height: number;
   text: string;
   fontSize: number;
   fontWeight: "normal" | "bold";
   color: string;
+  /** 背景色。`"transparent"` でなし */
+  backgroundColor: string;
   rotation: number;
 };
 
 export type TextPatch = Partial<
-  Pick<TextAnnotation, "x" | "y" | "text" | "fontSize" | "fontWeight" | "color" | "rotation">
+  Pick<
+    TextAnnotation,
+    | "x"
+    | "y"
+    | "width"
+    | "height"
+    | "text"
+    | "fontSize"
+    | "fontWeight"
+    | "color"
+    | "backgroundColor"
+    | "rotation"
+  >
 >;
 
 export type TextStyle = {
   color: string;
+  backgroundColor: string;
   fontSize: number;
   fontWeight: "normal" | "bold";
 };
 
-export const TEXT_FONT_FAMILY = 'Meiryo, "メイリオ", sans-serif';
+export const TEXT_FONT_FAMILY = '"LINE Seed JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif';
 export const DEFAULT_TEXT_COLOR = "#32CD32";
+export const DEFAULT_TEXT_BACKGROUND = "#FFFFFF";
 export const DEFAULT_TEXT_SIZE = 32;
 export const DEFAULT_TEXT_WEIGHT: TextStyle["fontWeight"] = "bold";
 export const TEXT_FONT_SIZES = [16, 24, 32, 48, 64] as const;
 export const DEFAULT_TEXT_CONTENT = "テキスト";
+
+export function isTransparentBackground(color: string | undefined | null): boolean {
+  if (!color) {
+    return true;
+  }
+  const normalized = color.trim().toLowerCase();
+  return normalized === "transparent" || normalized === "rgba(0, 0, 0, 0)" || normalized === "rgba(0,0,0,0)";
+}
 
 /** カウンター注釈（連番の円マーカー） */
 export type CounterAnnotation = {

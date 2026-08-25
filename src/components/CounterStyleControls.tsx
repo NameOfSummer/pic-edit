@@ -1,3 +1,6 @@
+import { ColorPickerButton } from "@/components/ColorPickerButton";
+import { StyleFieldLabel } from "@/components/StyleFieldLabel";
+import { isPresetColor } from "@/lib/color";
 import { ANNOTATION_COLORS, COUNTER_SIZES, type CounterStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
@@ -7,9 +10,12 @@ type Props = {
 };
 
 export function CounterStyleControls({ style, onChange }: Props) {
+  const customColor = !isPresetColor(style.color, ANNOTATION_COLORS);
+
   return (
     <div className="flex flex-wrap items-center gap-3" onPointerDown={(event) => event.stopPropagation()}>
       <div className="flex items-center gap-1.5" role="group" aria-label="カウンターの色">
+        <StyleFieldLabel>色</StyleFieldLabel>
         {ANNOTATION_COLORS.map((color) => {
           const selected = style.color.toLowerCase() === color.toLowerCase();
           return (
@@ -30,11 +36,18 @@ export function CounterStyleControls({ style, onChange }: Props) {
             />
           );
         })}
+        <ColorPickerButton
+          value={style.color}
+          active={customColor}
+          label="番号の自由な色"
+          onChange={(color) => onChange({ color })}
+        />
       </div>
 
       <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
 
-      <div className="flex items-center gap-1" role="group" aria-label="カウンターのサイズ">
+      <div className="flex items-center gap-1.5" role="group" aria-label="カウンターのサイズ">
+        <StyleFieldLabel>サイズ</StyleFieldLabel>
         {COUNTER_SIZES.map((size) => {
           const selected = style.size === size;
           return (
