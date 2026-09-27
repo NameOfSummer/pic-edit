@@ -28,7 +28,6 @@ export function useMarkers() {
         return null;
       }
       setMarkers((current) => [...current, draft]);
-      setSelectedMarkerId(draft.id);
       return draft.id;
     },
     [],

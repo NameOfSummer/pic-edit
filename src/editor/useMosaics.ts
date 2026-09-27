@@ -26,7 +26,6 @@ export function useMosaics() {
       blockSize: style?.blockSize ?? DEFAULT_MOSAIC_BLOCK,
     };
     setMosaics((current) => [...current, draft]);
-    setSelectedMosaicId(draft.id);
     return draft.id;
   }, []);
 

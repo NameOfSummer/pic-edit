@@ -29,7 +29,6 @@ export function useArrows() {
       return null;
     }
     setArrows((current) => [...current, draft]);
-    setSelectedArrowId(draft.id);
     return draft.id;
   }, []);
 

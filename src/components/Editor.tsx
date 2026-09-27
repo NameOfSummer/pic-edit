@@ -978,7 +978,7 @@ export function Editor() {
       pushHistory();
       createdId = addMarker(from, to, markerStyle, event.shiftKey);
     }
-    if (createdId) {
+    if (tool === "rect" && createdId) {
       setTool("select");
     }
   };
