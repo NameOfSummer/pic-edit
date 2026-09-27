@@ -11,7 +11,8 @@ concurrency:
 jobs:
   check:
     name: Lint & Build
-    runs-on: ubuntu-latest
+    # ubuntu-latest は 2026-10-19 から Ubuntu 26.04 へ移行する。Node は setup-node で固定済みなので、ランナーは 24.04 に固定する。
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
