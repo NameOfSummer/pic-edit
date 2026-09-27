@@ -9,8 +9,13 @@ import {
 } from "./types";
 import { arrowLength } from "./arrowGeometry";
 
+/** 追加を受け付ける矢印の最短長（px）。 */
 const MIN_ARROW_LENGTH = 16;
 
+/**
+ * 矢印注釈の配列と選択状態を持つ。
+ * @returns {object} 追加・更新・削除と選択 id
+ */
 export function useArrows() {
   const [arrows, setArrows] = useState<ArrowAnnotation[]>([]);
   const [selectedArrowId, setSelectedArrowId] = useState<string | null>(null);
@@ -29,7 +34,6 @@ export function useArrows() {
       return null;
     }
     setArrows((current) => [...current, draft]);
-    setSelectedArrowId(draft.id);
     return draft.id;
   }, []);
 

@@ -1,6 +1,7 @@
 import type { ImageLayer, MosaicAnnotation } from "./types";
 import { loadHtmlImage } from "./images";
 
+/** モザイクの外接矩形。 */
 export type Bounds = {
   minX: number;
   minY: number;
@@ -8,6 +9,11 @@ export type Bounds = {
   maxY: number;
 };
 
+/**
+ * 回転後のモザイク矩形の四隅を返す。
+ * @param mosaic モザイク
+ * @returns {Array<{ x: number; y: number }>} 四隅
+ */
 function rotatedCorners(mosaic: MosaicAnnotation): Array<{ x: number; y: number }> {
   const cx = mosaic.x + mosaic.width / 2;
   const cy = mosaic.y + mosaic.height / 2;
@@ -28,6 +34,11 @@ function rotatedCorners(mosaic: MosaicAnnotation): Array<{ x: number; y: number 
   }));
 }
 
+/**
+ * モザイクの外接矩形を返す。
+ * @param mosaic モザイク
+ * @returns {Bounds} 外接矩形
+ */
 export function getMosaicBounds(mosaic: MosaicAnnotation): Bounds {
   const corners = rotatedCorners(mosaic);
   return {
@@ -38,6 +49,12 @@ export function getMosaicBounds(mosaic: MosaicAnnotation): Bounds {
   };
 }
 
+/**
+ * キャンバスの画素をブロック単位で粗くする。
+ * @param canvas 対象キャンバス
+ * @param blockSize ブロックの一辺（px）
+ * @returns {void}
+ */
 export function pixelateCanvas(canvas: HTMLCanvasElement, blockSize: number): void {
   const width = canvas.width;
   const height = canvas.height;
@@ -62,7 +79,15 @@ export function pixelateCanvas(canvas: HTMLCanvasElement, blockSize: number): vo
   ctx.drawImage(small, 0, 0, width, height);
 }
 
-/** 書き出しキャンバス上の既存画素をモザイク化して描き戻す */
+/**
+ * 書き出しキャンバス上の既存画素をモザイク化して描き戻す。
+ * @param ctx 描画先
+ * @param mosaic モザイク範囲
+ * @param offsetX 書き出し原点 X
+ * @param offsetY 書き出し原点 Y
+ * @param scale 表示サイズに対する倍率
+ * @returns {void}
+ */
 export function drawMosaicOnCanvas(
   ctx: CanvasRenderingContext2D,
   mosaic: MosaicAnnotation,
@@ -98,7 +123,13 @@ export function drawMosaicOnCanvas(
   ctx.restore();
 }
 
-/** 画面プレビュー用: レイヤーをモザイク矩形内に合成してピクセル化 */
+/**
+ * 画面プレビュー用に、レイヤーをモザイク矩形内へ合成してピクセル化する。
+ * @param canvas 描画先
+ * @param mosaic モザイク範囲
+ * @param layers 下にある画像
+ * @returns {Promise<void>}
+ */
 export async function renderMosaicPreview(
   canvas: HTMLCanvasElement,
   mosaic: MosaicAnnotation,

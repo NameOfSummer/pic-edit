@@ -4,11 +4,17 @@ import { isPresetColor } from "@/lib/color";
 import { ANNOTATION_COLORS, COUNTER_SIZES, type CounterStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** カウンターの色・サイズコントロールのプロパティ。 */
 type Props = {
   style: CounterStyle;
   onChange: (patch: Partial<CounterStyle>) => void;
 };
 
+/**
+ * 番号カウンター注釈の色とサイズを選ぶツールバーコントロール。
+ * @param props 現在のスタイルと変更コールバック
+ * @returns {JSX.Element} スタイル操作 UI
+ */
 export function CounterStyleControls({ style, onChange }: Props) {
   const customColor = !isPresetColor(style.color, ANNOTATION_COLORS);
 

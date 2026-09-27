@@ -12,6 +12,10 @@ import {
   type TextStyle,
 } from "./types";
 
+/**
+ * テキスト注釈の配列と選択状態を持つ。
+ * @returns {object} 追加・更新・削除と選択 id
+ */
 export function useTexts() {
   const [texts, setTexts] = useState<TextAnnotation[]>([]);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);

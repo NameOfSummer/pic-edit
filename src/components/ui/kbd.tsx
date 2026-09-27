@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils"
 
+/**
+ * キーボードショートカット表示用の kbd 要素。
+ * @param props kbd 属性と className
+ * @returns {JSX.Element} kbd 要素
+ */
 function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
   return (
     <kbd
@@ -15,6 +20,11 @@ function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
   )
 }
 
+/**
+ * 複数の Kbd を並べるグループ。
+ * @param props div 相当の属性と className
+ * @returns {JSX.Element} グループ要素
+ */
 function KbdGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <kbd

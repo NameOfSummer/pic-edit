@@ -5,6 +5,7 @@ import { useEyedropper } from "@/editor/EyedropperContext";
 import { toHexColor } from "@/lib/color";
 import { cn } from "@/lib/utils";
 
+/** カラーピッカーボタンのプロパティ。 */
 type Props = {
   value: string;
   onChange: (color: string) => void;
@@ -13,7 +14,11 @@ type Props = {
   label?: string;
 };
 
-/** プリセットにない色を選ぶためのカラーピッカー（macOS 風パネル） */
+/**
+ * プリセットにない色を選ぶためのカラーピッカー（macOS 風パネル）。
+ * @param props 現在色と変更コールバック
+ * @returns {JSX.Element} ピッカー起動ボタン
+ */
 export function ColorPickerButton({
   value,
   onChange,

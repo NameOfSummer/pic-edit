@@ -1,15 +1,21 @@
 import { rgbToHex } from "@/lib/color";
 import { renderSceneToCanvas, type Bounds, type SceneDocument } from "@/editor/export";
 
+/** この値未満のアルファは透明として色を返さない。 */
 const MIN_ALPHA = 16;
 
+/** 合成済みキャンバスから色を読むスポイト。 */
 export type SceneColorSampler = {
   bounds: Bounds;
   /** 画面座標（clientX/Y）の色。透明なら null */
   sample: (clientX: number, clientY: number) => string | null;
 };
 
-/** スポイト用: 画面座標系で 1:1 合成し、クリック位置の色を返す */
+/**
+ * 画面座標で 1:1 合成し、クリック位置の色を返すスポイトを作る。
+ * @param doc 画像と注釈
+ * @returns {Promise<SceneColorSampler | null>} シーンが空なら null
+ */
 export async function createSceneColorSampler(
   doc: SceneDocument,
 ): Promise<SceneColorSampler | null> {

@@ -7,8 +7,10 @@ import type {
   TextAnnotation,
 } from "./types";
 
+/** 連続ペーストのたびにずらす距離（px）。 */
 export const ANNOTATION_PASTE_OFFSET = 24;
 
+/** コピー中の注釈。id は持たない。 */
 export type AnnotationClipboard =
   | { kind: "arrow"; data: Omit<ArrowAnnotation, "id"> }
   | { kind: "rect"; data: Omit<RectAnnotation, "id"> }
@@ -17,6 +19,12 @@ export type AnnotationClipboard =
   | { kind: "mosaic"; data: Omit<MosaicAnnotation, "id"> }
   | { kind: "marker"; data: Omit<MarkerAnnotation, "id"> };
 
+/**
+ * ペースト位置を右下へずらしたコピーを返す。
+ * @param clip コピー中の注釈
+ * @param offset ずらす距離（px）
+ * @returns {AnnotationClipboard} ずらした注釈
+ */
 export function shiftAnnotationClipboard(
   clip: AnnotationClipboard,
   offset = ANNOTATION_PASTE_OFFSET,
@@ -83,6 +91,11 @@ export function shiftAnnotationClipboard(
   }
 }
 
+/**
+ * 注釈から id を除いたコピー用データを返す。
+ * @param item id を持つ注釈
+ * @returns {Omit<T, "id">} id を除いたデータ
+ */
 export function omitAnnotationId<T extends { id: string }>(item: T): Omit<T, "id"> {
   const { id: _id, ...rest } = item;
   return rest;

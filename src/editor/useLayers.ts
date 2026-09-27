@@ -2,6 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cropImageSrc, filesToLayers } from "./images";
 import type { CropRect, ImageLayer, LayerPatch, Point } from "./types";
 
+/**
+ * レイヤーを指定位置へ移す。範囲外や同じ位置なら配列をそのまま返す。
+ * @param layers 現在の重ね順
+ * @param id 動かすレイヤー
+ * @param toIndex 移動先のインデックス
+ * @returns {ImageLayer[]} 新しい重ね順
+ */
 function moveLayer(layers: ImageLayer[], id: string, toIndex: number): ImageLayer[] {
   const fromIndex = layers.findIndex((layer) => layer.id === id);
   if (fromIndex < 0 || toIndex < 0 || toIndex >= layers.length || fromIndex === toIndex) {
@@ -13,6 +20,10 @@ function moveLayer(layers: ImageLayer[], id: string, toIndex: number): ImageLaye
   return next;
 }
 
+/**
+ * 画像レイヤーの配列と選択状態を持つ。
+ * @returns {object} 追加・移動・削除・トリミングと選択 id
+ */
 export function useLayers() {
   const [layers, setLayers] = useState<ImageLayer[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);

@@ -1,5 +1,6 @@
 import { TEXT_FONT_FAMILY, type CounterAnnotation } from "./types";
 
+/** カウンター円の外接矩形。 */
 export type Bounds = {
   minX: number;
   minY: number;
@@ -7,6 +8,11 @@ export type Bounds = {
   maxY: number;
 };
 
+/**
+ * カウンター円の外接矩形を返す。
+ * @param counter カウンター
+ * @returns {Bounds} 外接矩形
+ */
 export function getCounterBounds(counter: CounterAnnotation): Bounds {
   const radius = counter.size / 2;
   return {
@@ -17,7 +23,11 @@ export function getCounterBounds(counter: CounterAnnotation): Bounds {
   };
 }
 
-/** 背景色に対して読みやすい数字色 */
+/**
+ * 背景色に対して読みやすい数字色を返す。
+ * @param background 円の塗り色
+ * @returns {string} `#111111` または `#FFFFFF`
+ */
 export function counterLabelColor(background: string): string {
   const hex = background.replace("#", "");
   if (hex.length !== 6) {
@@ -30,6 +40,15 @@ export function counterLabelColor(background: string): string {
   return luminance > 0.72 ? "#111111" : "#FFFFFF";
 }
 
+/**
+ * 書き出しキャンバスにカウンターを描く。
+ * @param ctx 描画先
+ * @param counter カウンター
+ * @param offsetX 書き出し原点 X
+ * @param offsetY 書き出し原点 Y
+ * @param scale 表示サイズに対する倍率
+ * @returns {void}
+ */
 export function drawCounterOnCanvas(
   ctx: CanvasRenderingContext2D,
   counter: CounterAnnotation,

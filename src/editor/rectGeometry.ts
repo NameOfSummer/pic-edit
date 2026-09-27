@@ -1,5 +1,6 @@
 import type { RectAnnotation } from "./types";
 
+/** 枠の外接矩形。 */
 export type Bounds = {
   minX: number;
   minY: number;
@@ -7,6 +8,11 @@ export type Bounds = {
   maxY: number;
 };
 
+/**
+ * 回転後の枠の四隅を返す。
+ * @param rect 枠
+ * @returns {Array<{ x: number; y: number }>} 四隅
+ */
 function rotatedCorners(rect: RectAnnotation): Array<{ x: number; y: number }> {
   const cx = rect.x + rect.width / 2;
   const cy = rect.y + rect.height / 2;
@@ -27,6 +33,11 @@ function rotatedCorners(rect: RectAnnotation): Array<{ x: number; y: number }> {
   }));
 }
 
+/**
+ * 線の太さを含めた枠の外接矩形を返す。
+ * @param rect 枠
+ * @returns {Bounds} 外接矩形
+ */
 export function getRectBounds(rect: RectAnnotation): Bounds {
   const corners = rotatedCorners(rect);
   const pad = rect.strokeWidth;
@@ -38,6 +49,14 @@ export function getRectBounds(rect: RectAnnotation): Bounds {
   };
 }
 
+/**
+ * ドラッグの始点と終点から、左上原点の矩形を作る。
+ * @param x1 始点 X
+ * @param y1 始点 Y
+ * @param x2 終点 X
+ * @param y2 終点 Y
+ * @returns {{ x: number; y: number; width: number; height: number }} 正規化した矩形
+ */
 export function normalizeRectFromDrag(
   x1: number,
   y1: number,
@@ -54,6 +73,15 @@ export function normalizeRectFromDrag(
   };
 }
 
+/**
+ * 書き出しキャンバスに枠を描く。
+ * @param ctx 描画先
+ * @param rect 枠
+ * @param offsetX 書き出し原点 X
+ * @param offsetY 書き出し原点 Y
+ * @param scale 表示サイズに対する倍率
+ * @returns {void}
+ */
 export function drawRectOnCanvas(
   ctx: CanvasRenderingContext2D,
   rect: RectAnnotation,

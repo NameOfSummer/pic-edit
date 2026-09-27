@@ -9,19 +9,27 @@ import {
 } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** テキストスタイルコントロールのプロパティ。 */
 type Props = {
   style: TextStyle;
   onChange: (patch: Partial<TextStyle>) => void;
 };
 
+/** 背景色プリセット（色と表示名）。 */
 const BACKGROUND_COLORS = [
   { color: "#FFFFFF", label: "白" },
   { color: "#9CA3AF", label: "グレー" },
   { color: "#000000", label: "黒" },
 ] as const;
 
+/** 背景色プリセットの色値一覧。 */
 const BACKGROUND_PRESETS = BACKGROUND_COLORS.map((item) => item.color);
 
+/**
+ * テキスト注釈の文字色・背景・サイズ・太さを選ぶツールバーコントロール。
+ * @param props 現在のスタイルと変更コールバック
+ * @returns {JSX.Element} スタイル操作 UI
+ */
 export function TextStyleControls({ style, onChange }: Props) {
   const backgroundTransparent = isTransparentBackground(style.backgroundColor);
   const customTextColor = !isPresetColor(style.color, ANNOTATION_COLORS);

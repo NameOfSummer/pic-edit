@@ -4,6 +4,7 @@ import {
   type TextAnnotation,
 } from "./types";
 
+/** テキストボックスの外接矩形。 */
 export type Bounds = {
   minX: number;
   minY: number;
@@ -11,14 +12,25 @@ export type Bounds = {
   maxY: number;
 };
 
+/** テキストボックスの最小幅（px）。 */
 export const MIN_TEXT_BOX_WIDTH = 40;
+/** テキストボックスの最小高さ（px）。 */
 export const MIN_TEXT_BOX_HEIGHT = 24;
 
+/**
+ * canvas の font 指定文字列を作る。
+ * @param text サイズと太さ
+ * @returns {string} CSS font 値
+ */
 function fontCss(text: Pick<TextAnnotation, "fontSize" | "fontWeight">): string {
   return `${text.fontWeight === "bold" ? "700" : "400"} ${text.fontSize}px ${TEXT_FONT_FAMILY}`;
 }
 
-/** 折り返しなしのテキスト固有サイズを測る（新規作成時の初期ボックス用） */
+/**
+ * 折り返しなしのテキスト固有サイズを測る。新規作成時の初期ボックスに使う。
+ * @param text 文字列・サイズ・太さ
+ * @returns {{ width: number; height: number }} 最小サイズ以上の幅と高さ
+ */
 export function measureTextBox(text: Pick<TextAnnotation, "text" | "fontSize" | "fontWeight">): {
   width: number;
   height: number;
@@ -48,7 +60,12 @@ export function measureTextBox(text: Pick<TextAnnotation, "text" | "fontSize" | 
   };
 }
 
-/** 指定幅で折り返した行を返す */
+/**
+ * 指定幅で折り返した行を返す。
+ * @param text 文字列・サイズ・太さ
+ * @param maxWidth 折り返す幅（px）
+ * @returns {string[]} 行の配列
+ */
 export function wrapTextLines(
   text: Pick<TextAnnotation, "text" | "fontSize" | "fontWeight">,
   maxWidth: number,
@@ -86,6 +103,11 @@ export function wrapTextLines(
   return lines.length > 0 ? lines : [""];
 }
 
+/**
+ * 保存済みの幅と高さ、なければ計測値を、最小サイズ以上で返す。
+ * @param text テキスト注釈
+ * @returns {{ width: number; height: number }} ボックスサイズ
+ */
 export function getTextBoxSize(text: TextAnnotation): { width: number; height: number } {
   if (!(text.width > 0) || !(text.height > 0)) {
     return measureTextBox(text);
@@ -96,6 +118,11 @@ export function getTextBoxSize(text: TextAnnotation): { width: number; height: n
   };
 }
 
+/**
+ * 回転を含めたテキストボックスの外接矩形を返す。
+ * @param text テキスト注釈
+ * @returns {Bounds} 外接矩形
+ */
 export function getTextBounds(text: TextAnnotation): Bounds {
   const box = getTextBoxSize(text);
   const cx = text.x + box.width / 2;
@@ -126,6 +153,15 @@ export function getTextBounds(text: TextAnnotation): Bounds {
 /** 画面上の移動量を、回転前のローカル座標の移動量に変換する */
 export { screenDeltaToLocal } from "./boxResize";
 
+/**
+ * 書き出しキャンバスにテキストを描く。
+ * @param ctx 描画先
+ * @param text テキスト注釈
+ * @param offsetX 書き出し原点 X
+ * @param offsetY 書き出し原点 Y
+ * @param scale 表示サイズに対する倍率
+ * @returns {void}
+ */
 export function drawTextOnCanvas(
   ctx: CanvasRenderingContext2D,
   text: TextAnnotation,

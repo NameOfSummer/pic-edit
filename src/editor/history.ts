@@ -8,6 +8,7 @@ import type {
   TextAnnotation,
 } from "./types";
 
+/** Undo 用に保存するキャンバス全体。 */
 export type EditorSnapshot = {
   layers: ImageLayer[];
   arrows: ArrowAnnotation[];
@@ -18,8 +19,14 @@ export type EditorSnapshot = {
   markers: MarkerAnnotation[];
 };
 
+/** 履歴に残す操作回数の上限。 */
 const HISTORY_LIMIT = 50;
 
+/**
+ * スナップショットを浅いコピーで複製する。
+ * @param snapshot 複製元
+ * @returns {EditorSnapshot} 独立したコピー
+ */
 function cloneSnapshot(snapshot: EditorSnapshot): EditorSnapshot {
   return {
     layers: snapshot.layers.map((item) => ({ ...item })),
@@ -32,6 +39,10 @@ function cloneSnapshot(snapshot: EditorSnapshot): EditorSnapshot {
   };
 }
 
+/**
+ * Undo / Redo のスタックを作る。
+ * @returns {object} push・undo・redo・clear
+ */
 export function createHistoryController() {
   let past: EditorSnapshot[] = [];
   let future: EditorSnapshot[] = [];
@@ -79,4 +90,5 @@ export function createHistoryController() {
   };
 }
 
+/** createHistoryController の戻り値。 */
 export type HistoryController = ReturnType<typeof createHistoryController>;

@@ -9,8 +9,13 @@ import {
   type Point,
 } from "./types";
 
+/** 追加を受け付けるマーカーの最短長（px）。 */
 const MIN_MARKER_LENGTH = 12;
 
+/**
+ * マーカー注釈の配列と選択状態を持つ。
+ * @returns {object} 追加・更新・削除と選択 id
+ */
 export function useMarkers() {
   const [markers, setMarkers] = useState<MarkerAnnotation[]>([]);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
@@ -28,7 +33,6 @@ export function useMarkers() {
         return null;
       }
       setMarkers((current) => [...current, draft]);
-      setSelectedMarkerId(draft.id);
       return draft.id;
     },
     [],

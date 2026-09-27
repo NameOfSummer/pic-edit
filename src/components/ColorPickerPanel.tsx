@@ -11,8 +11,10 @@ import {
 } from "@/lib/color";
 import { cn } from "@/lib/utils";
 
+/** カラーピッカーの表示タブ種別。 */
 type Tab = "grid" | "spectrum";
 
+/** カラーピッカーパネルのプロパティ。 */
 type Props = {
   value: string;
   onChange: (color: string) => void;
@@ -20,6 +22,7 @@ type Props = {
   onEyedropper?: () => void;
 };
 
+/** グリッド／スペクトル切替タブの定義。 */
 const TABS: { id: Tab; label: string }[] = [
   { id: "grid", label: "グリッド" },
   { id: "spectrum", label: "スペクトル" },
@@ -28,9 +31,16 @@ const TABS: { id: Tab; label: string }[] = [
 /** タブ切り替えでポップアップサイズが変わらないよう固定 */
 const PANEL_BODY_HEIGHT = 176;
 
+/** グレースケール色の1行分パレット。 */
 const GRAYSCALE = buildGrayscaleRow();
+/** 色相グリッドのパレット。 */
 const CHROMATIC = buildChromaticGrid();
 
+/**
+ * macOS 風のカラーピッカー本体（グリッド・スペクトル・HEX）。
+ * @param props 現在色と変更コールバック
+ * @returns {JSX.Element} ピッカーパネル
+ */
 export function ColorPickerPanel({ value, onChange, onEyedropper }: Props) {
   const [tab, setTab] = useState<Tab>("grid");
   const hex = toHexColor(value);
@@ -98,6 +108,11 @@ export function ColorPickerPanel({ value, onChange, onEyedropper }: Props) {
   );
 }
 
+/**
+ * グリッドタブの色見本一覧。
+ * @param props 現在色と選択コールバック
+ * @returns {JSX.Element} グリッド UI
+ */
 function GridView({ value, onChange }: Props) {
   const current = value.toLowerCase();
 
@@ -138,6 +153,11 @@ function GridView({ value, onChange }: Props) {
   );
 }
 
+/**
+ * グリッド内の1色スウォッチボタン。
+ * @param props 色・選択状態・選択時コールバック
+ * @returns {JSX.Element} スウォッチ
+ */
 function Swatch({
   color,
   selected,
@@ -164,6 +184,11 @@ function Swatch({
   );
 }
 
+/**
+ * スペクトルタブの連続色相ピッカー。
+ * @param props 現在色と変更コールバック
+ * @returns {JSX.Element} スペクトル UI
+ */
 function SpectrumView({ value, onChange }: Props) {
   const hsl = hexToHsl(value);
   const areaRef = useRef<HTMLDivElement>(null);
@@ -227,6 +252,11 @@ function SpectrumView({ value, onChange }: Props) {
   );
 }
 
+/**
+ * HEX 文字列を直接編集する入力欄。
+ * @param props 現在の HEX と確定時コールバック
+ * @returns {JSX.Element} HEX 入力
+ */
 function HexField({ value, onChange }: { value: string; onChange: (color: string) => void }) {
   const [draft, setDraft] = useState(value.toUpperCase());
 

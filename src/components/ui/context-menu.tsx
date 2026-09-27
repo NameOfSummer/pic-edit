@@ -4,12 +4,22 @@ import { ContextMenu as ContextMenuPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * コンテキストメニューのルート。
+ * @param props Radix ContextMenu.Root のプロパティ
+ * @returns {JSX.Element} ルート要素
+ */
 function ContextMenu({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Root>) {
   return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />
 }
 
+/**
+ * コンテキストメニューを開くトリガー。
+ * @param props Radix ContextMenu.Trigger のプロパティ
+ * @returns {JSX.Element} トリガー要素
+ */
 function ContextMenuTrigger({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Trigger>) {
@@ -18,6 +28,11 @@ function ContextMenuTrigger({
   )
 }
 
+/**
+ * コンテキストメニュー項目のグループ。
+ * @param props Radix ContextMenu.Group のプロパティ
+ * @returns {JSX.Element} グループ要素
+ */
 function ContextMenuGroup({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Group>) {
@@ -26,6 +41,11 @@ function ContextMenuGroup({
   )
 }
 
+/**
+ * コンテキストメニュー内容のポータル。
+ * @param props Radix ContextMenu.Portal のプロパティ
+ * @returns {JSX.Element} ポータル要素
+ */
 function ContextMenuPortal({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Portal>) {
@@ -34,12 +54,22 @@ function ContextMenuPortal({
   )
 }
 
+/**
+ * サブメニューのルート。
+ * @param props Radix ContextMenu.Sub のプロパティ
+ * @returns {JSX.Element} サブメニュールート
+ */
 function ContextMenuSub({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Sub>) {
   return <ContextMenuPrimitive.Sub data-slot="context-menu-sub" {...props} />
 }
 
+/**
+ * ラジオグループ形式のメニュー項目群。
+ * @param props Radix ContextMenu.RadioGroup のプロパティ
+ * @returns {JSX.Element} ラジオグループ
+ */
 function ContextMenuRadioGroup({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.RadioGroup>) {
@@ -51,6 +81,11 @@ function ContextMenuRadioGroup({
   )
 }
 
+/**
+ * サブメニューを開く項目。
+ * @param props サブトリガー属性と inset 指定
+ * @returns {JSX.Element} サブトリガー
+ */
 function ContextMenuSubTrigger({
   className,
   inset,
@@ -75,6 +110,11 @@ function ContextMenuSubTrigger({
   )
 }
 
+/**
+ * サブメニューの内容パネル。
+ * @param props サブコンテンツ属性と className
+ * @returns {JSX.Element} サブコンテンツ
+ */
 function ContextMenuSubContent({
   className,
   ...props
@@ -91,6 +131,11 @@ function ContextMenuSubContent({
   )
 }
 
+/**
+ * コンテキストメニューの本体パネル。
+ * @param props コンテンツ属性と className
+ * @returns {JSX.Element} メニューコンテンツ
+ */
 function ContextMenuContent({
   className,
   ...props
@@ -109,6 +154,11 @@ function ContextMenuContent({
   )
 }
 
+/**
+ * コンテキストメニューの通常項目。
+ * @param props 項目属性と inset / variant
+ * @returns {JSX.Element} メニュー項目
+ */
 function ContextMenuItem({
   className,
   inset,
@@ -132,6 +182,11 @@ function ContextMenuItem({
   )
 }
 
+/**
+ * チェック可能なコンテキストメニュー項目。
+ * @param props チェックボックス項目の属性
+ * @returns {JSX.Element} チェック項目
+ */
 function ContextMenuCheckboxItem({
   className,
   children,
@@ -158,6 +213,11 @@ function ContextMenuCheckboxItem({
   )
 }
 
+/**
+ * ラジオ選択のコンテキストメニュー項目。
+ * @param props ラジオ項目の属性
+ * @returns {JSX.Element} ラジオ項目
+ */
 function ContextMenuRadioItem({
   className,
   children,
@@ -182,6 +242,11 @@ function ContextMenuRadioItem({
   )
 }
 
+/**
+ * コンテキストメニュー内のラベル。
+ * @param props ラベル属性と inset 指定
+ * @returns {JSX.Element} ラベル
+ */
 function ContextMenuLabel({
   className,
   inset,
@@ -202,6 +267,11 @@ function ContextMenuLabel({
   )
 }
 
+/**
+ * コンテキストメニュー内の区切り線。
+ * @param props セパレータ属性と className
+ * @returns {JSX.Element} セパレータ
+ */
 function ContextMenuSeparator({
   className,
   ...props
@@ -215,6 +285,11 @@ function ContextMenuSeparator({
   )
 }
 
+/**
+ * メニュー項目右端のショートカット表示。
+ * @param props span 属性と className
+ * @returns {JSX.Element} ショートカット表示
+ */
 function ContextMenuShortcut({
   className,
   ...props

@@ -8,8 +8,13 @@ import {
   type Point,
 } from "./types";
 
+/** 追加を受け付けるモザイクの最短辺（px）。 */
 const MIN_MOSAIC_SIZE = 16;
 
+/**
+ * モザイク注釈の配列と選択状態を持つ。
+ * @returns {object} 追加・更新・削除と選択 id
+ */
 export function useMosaics() {
   const [mosaics, setMosaics] = useState<MosaicAnnotation[]>([]);
   const [selectedMosaicId, setSelectedMosaicId] = useState<string | null>(null);
@@ -26,7 +31,6 @@ export function useMosaics() {
       blockSize: style?.blockSize ?? DEFAULT_MOSAIC_BLOCK,
     };
     setMosaics((current) => [...current, draft]);
-    setSelectedMosaicId(draft.id);
     return draft.id;
   }, []);
 

@@ -1,9 +1,19 @@
 import type { ArrowAnnotation, Point } from "./types";
 
+/**
+ * 矢印の始点から終点までの長さを返す。
+ * @param arrow 始点と終点
+ * @returns {number} 長さ（px）
+ */
 export function arrowLength(arrow: Pick<ArrowAnnotation, "x1" | "y1" | "x2" | "y2">): number {
   return Math.hypot(arrow.x2 - arrow.x1, arrow.y2 - arrow.y1);
 }
 
+/**
+ * 矢印頭部の先端と左右の底点を返す。
+ * @param arrow 始点・終点・太さ
+ * @returns {[Point, Point, Point]} 先端、左、右
+ */
 export function arrowHeadPoints(
   arrow: Pick<ArrowAnnotation, "x1" | "y1" | "x2" | "y2" | "strokeWidth">,
 ): [Point, Point, Point] {
@@ -23,7 +33,13 @@ export function arrowHeadPoints(
   ];
 }
 
-/** 線分からの距離でヒット判定 */
+/**
+ * 点が矢印の線の近くにあるか判定する。
+ * @param arrow 判定する矢印
+ * @param point 画面上の点
+ * @param tolerance 線からの許容距離（px）
+ * @returns {boolean} 当たっていれば true
+ */
 export function hitTestArrow(arrow: ArrowAnnotation, point: Point, tolerance = 8): boolean {
   const { x1, y1, x2, y2 } = arrow;
   const dx = x2 - x1;
@@ -38,6 +54,15 @@ export function hitTestArrow(arrow: ArrowAnnotation, point: Point, tolerance = 8
   return Math.hypot(point.x - closestX, point.y - closestY) <= tolerance + arrow.strokeWidth / 2;
 }
 
+/**
+ * 書き出しキャンバスに矢印を描く。
+ * @param ctx 描画先
+ * @param arrow 矢印
+ * @param offsetX 書き出し原点 X
+ * @param offsetY 書き出し原点 Y
+ * @param scale 表示サイズに対する倍率
+ * @returns {void}
+ */
 export function drawArrowOnCanvas(
   ctx: CanvasRenderingContext2D,
   arrow: ArrowAnnotation,

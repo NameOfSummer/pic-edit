@@ -4,6 +4,7 @@ import type { ArrowAnnotation, ArrowPatch } from "@/editor/types";
 import { arrowHeadPoints } from "@/editor/arrowGeometry";
 import { cn } from "@/lib/utils";
 
+/** 矢印表示コンポーネントのプロパティ。 */
 type Props = {
   arrow: ArrowAnnotation;
   selected?: boolean;
@@ -12,6 +13,7 @@ type Props = {
   onChange: (patch: ArrowPatch) => void;
 };
 
+/** 矢印全体の移動ドラッグ状態。 */
 type DragState = {
   kind: "move";
   pointerId: number;
@@ -20,6 +22,11 @@ type DragState = {
   origin: ArrowAnnotation;
 };
 
+/**
+ * キャンバス上に矢印注釈を描画し、選択・移動操作を扱う。
+ * @param props 矢印データと操作コールバック
+ * @returns {JSX.Element} 矢印 SVG
+ */
 export function ArrowView({ arrow, selected = false, interactive, onSelect, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
   const onChangeRef = useRef(onChange);

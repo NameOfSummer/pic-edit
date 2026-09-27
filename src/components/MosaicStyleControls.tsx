@@ -2,11 +2,17 @@ import { StyleFieldLabel } from "@/components/StyleFieldLabel";
 import { MOSAIC_BLOCK_SIZES, type MosaicStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** モザイク粗さコントロールのプロパティ。 */
 type Props = {
   style: MosaicStyle;
   onChange: (patch: Partial<MosaicStyle>) => void;
 };
 
+/**
+ * モザイク注釈のブロックサイズ（粗さ）を選ぶツールバーコントロール。
+ * @param props 現在のスタイルと変更コールバック
+ * @returns {JSX.Element} スタイル操作 UI
+ */
 export function MosaicStyleControls({ style, onChange }: Props) {
   return (
     <div

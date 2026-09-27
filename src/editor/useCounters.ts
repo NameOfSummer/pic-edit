@@ -8,6 +8,11 @@ import {
   type Point,
 } from "./types";
 
+/**
+ * 次に付ける番号を返す。既存がなければ 1。
+ * @param counters 既存のカウンター
+ * @returns {number} 最大番号 + 1
+ */
 function nextCounterValue(counters: CounterAnnotation[]): number {
   if (counters.length === 0) {
     return 1;
@@ -15,13 +20,22 @@ function nextCounterValue(counters: CounterAnnotation[]): number {
   return Math.max(...counters.map((item) => item.value)) + 1;
 }
 
-/** 削除された番号より大きい番号を 1 つ繰り下げる（同番号の複製は維持） */
+/**
+ * 削除された番号より大きい番号を 1 つ繰り下げる。同番号の複製はそのまま残す。
+ * @param counters 残っているカウンター
+ * @param removedValue 削除した番号
+ * @returns {CounterAnnotation[]} 繰り下げ後の配列
+ */
 function afterRemove(counters: CounterAnnotation[], removedValue: number): CounterAnnotation[] {
   return counters.map((item) =>
     item.value > removedValue ? { ...item, value: item.value - 1 } : item,
   );
 }
 
+/**
+ * カウンター注釈の配列と選択状態を持つ。
+ * @returns {object} 追加・更新・削除と選択 id
+ */
 export function useCounters() {
   const [counters, setCounters] = useState<CounterAnnotation[]>([]);
   const [selectedCounterId, setSelectedCounterId] = useState<string | null>(null);

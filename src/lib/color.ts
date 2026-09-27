@@ -1,4 +1,9 @@
-/** `#rgb` / `#rrggbb` を 6 桁へ揃える */
+/**
+ * `#rgb` / `#rrggbb` を 6 桁へ揃える。解釈できないときは fallback を返す。
+ * @param color 入力色
+ * @param fallback 解釈できないときの色
+ * @returns {string} 6 桁の `#rrggbb`
+ */
 export function toHexColor(color: string, fallback = "#32CD32"): string {
   const trimmed = color.trim();
   if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
@@ -13,14 +18,27 @@ export function toHexColor(color: string, fallback = "#32CD32"): string {
   return fallback.toLowerCase();
 }
 
+/**
+ * 色がプリセットのいずれかと一致するか判定する。
+ * @param color 比較する色
+ * @param presets プリセットの色一覧
+ * @returns {boolean} 一致すれば true
+ */
 export function isPresetColor(color: string, presets: readonly string[]): boolean {
   const hex = toHexColor(color, color);
   return presets.some((preset) => toHexColor(preset) === hex);
 }
 
+/** 0〜255 の RGB。 */
 export type Rgb = { r: number; g: number; b: number };
+/** 色相・彩度・明度。h は度、s と l は 0〜100。 */
 export type Hsl = { h: number; s: number; l: number };
 
+/**
+ * 16 進カラーを RGB に変換する。
+ * @param hex `#rgb` または `#rrggbb`
+ * @returns {Rgb} 0〜255 の各成分
+ */
 export function hexToRgb(hex: string): Rgb {
   const normalized = toHexColor(hex, "#000000").slice(1);
   return {
@@ -30,14 +48,26 @@ export function hexToRgb(hex: string): Rgb {
   };
 }
 
-export function rgbToHex({ r, g, b }: Rgb): string {
+/**
+ * RGB を 16 進カラーに変換する。
+ * @param rgb 赤・緑・青
+ * @returns {string} `#rrggbb`
+ */
+export function rgbToHex(rgb: Rgb): string {
+  const { r, g, b } = rgb;
   const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
   return `#${[clamp(r), clamp(g), clamp(b)]
     .map((n) => n.toString(16).padStart(2, "0"))
     .join("")}`;
 }
 
-export function rgbToHsl({ r, g, b }: Rgb): Hsl {
+/**
+ * RGB を HSL に変換する。
+ * @param rgb 赤・緑・青
+ * @returns {Hsl} 色相・彩度・明度
+ */
+export function rgbToHsl(rgb: Rgb): Hsl {
+  const { r, g, b } = rgb;
   const rn = r / 255;
   const gn = g / 255;
   const bn = b / 255;
@@ -56,7 +86,13 @@ export function rgbToHsl({ r, g, b }: Rgb): Hsl {
   return { h: h * 360, s: s * 100, l: l * 100 };
 }
 
-export function hslToRgb({ h, s, l }: Hsl): Rgb {
+/**
+ * HSL を RGB に変換する。
+ * @param hsl 色相・彩度・明度
+ * @returns {Rgb} 0〜255 の各成分
+ */
+export function hslToRgb(hsl: Hsl): Rgb {
+  const { h, s, l } = hsl;
   const hn = ((h % 360) + 360) % 360 / 360;
   const sn = Math.max(0, Math.min(100, s)) / 100;
   const ln = Math.max(0, Math.min(100, l)) / 100;
@@ -82,18 +118,33 @@ export function hslToRgb({ h, s, l }: Hsl): Rgb {
   };
 }
 
+/**
+ * HSL を 16 進カラーに変換する。
+ * @param hsl 色相・彩度・明度
+ * @returns {string} `#rrggbb`
+ */
 export function hslToHex(hsl: Hsl): string {
   return rgbToHex(hslToRgb(hsl));
 }
 
+/**
+ * 16 進カラーを HSL に変換する。
+ * @param hex `#rgb` または `#rrggbb`
+ * @returns {Hsl} 色相・彩度・明度
+ */
 export function hexToHsl(hex: string): Hsl {
   return rgbToHsl(hexToRgb(hex));
 }
 
-/** macOS 風グリッド: グレースケール1行 + 色相列×明度行 */
+/** カラーピッカーのグレースケール列数。 */
 export const COLOR_GRID_COLS = 8;
+/** カラーピッカーの有彩色の行数。 */
 export const COLOR_GRID_ROWS = 6;
 
+/**
+ * 白から黒までの 1 行を作る。
+ * @returns {string[]} 左が白、右が黒の `#rrggbb`
+ */
 export function buildGrayscaleRow(): string[] {
   return Array.from({ length: COLOR_GRID_COLS }, (_, i) => {
     const l = 100 - (i / (COLOR_GRID_COLS - 1)) * 100;
@@ -102,8 +153,8 @@ export function buildGrayscaleRow(): string[] {
 }
 
 /**
- * 左からシアン寄り→紫→赤→黄→緑（スクリーンショットに近い並び）。
- * 上段ほど濃く、下段ほどパステル。
+ * 左からシアン寄り→紫→赤→黄→緑の並びで、上段ほど濃い格子を作る。
+ * @returns {string[][]} 行ごとの `#rrggbb`
  */
 export function buildChromaticGrid(): string[][] {
   return Array.from({ length: COLOR_GRID_ROWS }, (_, row) =>

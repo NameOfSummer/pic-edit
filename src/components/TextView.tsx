@@ -9,6 +9,7 @@ import {
 } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** テキスト表示コンポーネントのプロパティ。 */
 type Props = {
   text: TextAnnotation;
   selected?: boolean;
@@ -20,6 +21,7 @@ type Props = {
   onEndEdit: () => void;
 };
 
+/** テキスト移動のドラッグ状態。 */
 type DragState = {
   kind: "move";
   pointerId: number;
@@ -29,6 +31,11 @@ type DragState = {
   originY: number;
 };
 
+/**
+ * キャンバス上にテキスト注釈を描画し、移動とインライン編集を扱う。
+ * @param props テキストデータと操作コールバック
+ * @returns {JSX.Element} テキスト表示
+ */
 export function TextView({
   text,
   selected = false,

@@ -4,11 +4,17 @@ import { isPresetColor } from "@/lib/color";
 import { MARKER_COLORS, MARKER_STROKE_WIDTHS, type MarkerStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** マーカーの色・線幅コントロールのプロパティ。 */
 type Props = {
   style: MarkerStyle;
   onChange: (patch: Partial<MarkerStyle>) => void;
 };
 
+/**
+ * マーカー注釈の色と太さを選ぶツールバーコントロール。
+ * @param props 現在のスタイルと変更コールバック
+ * @returns {JSX.Element} スタイル操作 UI
+ */
 export function MarkerStyleControls({ style, onChange }: Props) {
   const customColor = !isPresetColor(style.color, MARKER_COLORS);
 
