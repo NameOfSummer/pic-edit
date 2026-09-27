@@ -23,6 +23,7 @@ import { TextStyleControls } from "@/components/TextStyleControls";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AnnotationStyle, CounterStyle, EditorTool, MarkerStyle, MosaicStyle, TextStyle } from "@/editor/types";
 
+/** ツールバー全体のプロパティ。 */
 type Props = {
   cropping: boolean;
   canExport: boolean;
@@ -58,6 +59,11 @@ type Props = {
   onCancelCrop: () => void;
 };
 
+/**
+ * ツールチップ付きのツールバー用アイコンボタン。
+ * @param props 見た目・無効状態・クリックとラベル
+ * @returns {JSX.Element} ツールバーボタン
+ */
 function ToolbarButton({
   className,
   children,
@@ -96,6 +102,7 @@ function ToolbarButton({
   );
 }
 
+/** 無効時の枠・背景・文字色クラス。 */
 const disabledButtonClass =
   "disabled:border-[var(--button-disabled)] disabled:bg-[var(--button-disabled)] disabled:text-white";
 
@@ -111,6 +118,7 @@ const addButtonClass = [
   disabledButtonClass,
 ].join(" ");
 
+/** 描画ツール群ボタンの共通クラス。 */
 const toolsButtonBaseClass = [
   "border-[var(--accent-tools)] bg-[var(--accent-tools)] text-black",
   "hover:enabled:bg-black hover:enabled:border-[var(--accent-tools)] hover:enabled:text-[var(--accent-tools)]",
@@ -118,10 +126,16 @@ const toolsButtonBaseClass = [
   disabledButtonClass,
 ].join(" ");
 
+/**
+ * 描画ツールボタンのクラスを選択状態に応じて組み立てる。
+ * @param active そのツールが選択中かどうか
+ * @returns {string} 適用する className
+ */
 function toolsButtonClass(active: boolean): string {
   return [toolsButtonBaseClass, active ? "ring-2 ring-black ring-offset-1" : ""].join(" ");
 }
 
+/** 履歴（元に戻す・やり直し・リセット）ボタンのクラス。 */
 const historyButtonClass = [
   "border-[var(--accent-history)] bg-[var(--accent-history)] text-black",
   "hover:enabled:bg-black hover:enabled:border-[var(--accent-history)] hover:enabled:text-[var(--accent-history)]",
@@ -129,6 +143,7 @@ const historyButtonClass = [
   disabledButtonClass,
 ].join(" ");
 
+/** 書き出し（ダウンロード・コピー）ボタンのクラス。 */
 const exportButtonClass = [
   "border-[var(--accent-export)] bg-[var(--accent-export)] text-black",
   "hover:enabled:bg-black hover:enabled:border-[var(--accent-export)] hover:enabled:text-[var(--accent-export)]",
@@ -136,6 +151,7 @@ const exportButtonClass = [
   disabledButtonClass,
 ].join(" ");
 
+/** クロップキャンセルボタンのクラス。 */
 const cancelButtonClass = [
   "border-[var(--accent-add)] bg-[var(--accent-add)] text-black",
   "hover:enabled:bg-black hover:enabled:border-[var(--accent-add)] hover:enabled:text-[var(--accent-add)]",
@@ -143,6 +159,11 @@ const cancelButtonClass = [
   disabledButtonClass,
 ].join(" ");
 
+/**
+ * エディタ上部のツールバー。ツール切替・スタイル・履歴・書き出しをまとめる。
+ * @param props ツール状態と各種操作コールバック
+ * @returns {JSX.Element} ツールバー UI
+ */
 export function Toolbar({
   cropping,
   canExport,

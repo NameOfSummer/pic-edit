@@ -3,11 +3,13 @@ import { RotateCw } from "lucide-react";
 import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
 import type { ImageLayer, LayerPatch } from "@/editor/types";
 
+/** レイヤー選択クロームのプロパティ。 */
 type Props = {
   layer: ImageLayer;
   onChange: (patch: LayerPatch) => void;
 };
 
+/** リサイズまたは回転のドラッグ状態。 */
 type DragState =
   | {
       kind: "resize";
@@ -27,11 +29,22 @@ type DragState =
       originRotation: number;
     };
 
+/**
+ * 角度を 0〜360 の範囲に正規化する。
+ * @param value 入力角度（度）
+ * @returns {number} 正規化後の角度
+ */
 function normalizeDegrees(value: number): number {
   const wrapped = value % 360;
   return wrapped < 0 ? wrapped + 360 : wrapped;
 }
 
+/**
+ * Shift 押下時は 15° 刻みにスナップした回転角を返す。
+ * @param degrees 生の回転角
+ * @param shiftKey Shift キーが押されているか
+ * @returns {number} スナップ後の角度
+ */
 function snapRotation(degrees: number, shiftKey: boolean): number {
   if (!shiftKey) {
     return normalizeDegrees(degrees);
@@ -39,8 +52,12 @@ function snapRotation(degrees: number, shiftKey: boolean): number {
   return normalizeDegrees(Math.round(degrees / 15) * 15);
 }
 
-/** 選択枠・回転・リサイズ。重ね順とは独立して最前面表示。
- *  本体はクリック透過し、ハンドルだけ操作可能（注釈への選択切り替えを妨げない）。 */
+/**
+ * 選択枠・回転・リサイズ。重ね順とは独立して最前面表示。
+ * 本体はクリック透過し、ハンドルだけ操作可能（注釈への選択切り替えを妨げない）。
+ * @param props 対象レイヤーと変更コールバック
+ * @returns {JSX.Element} 選択クローム UI
+ */
 export function SelectionChrome({ layer, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
 

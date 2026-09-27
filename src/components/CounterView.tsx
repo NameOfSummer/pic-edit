@@ -4,6 +4,7 @@ import { counterLabelColor } from "@/editor/counterGeometry";
 import { TEXT_FONT_FAMILY, type CounterAnnotation, type CounterPatch } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** カウンター表示コンポーネントのプロパティ。 */
 type Props = {
   counter: CounterAnnotation;
   selected: boolean;
@@ -12,6 +13,7 @@ type Props = {
   onChange: (patch: CounterPatch) => void;
 };
 
+/** カウンター移動のドラッグ状態。 */
 type DragState = {
   kind: "move";
   pointerId: number;
@@ -21,6 +23,11 @@ type DragState = {
   originY: number;
 };
 
+/**
+ * キャンバス上に番号カウンター注釈を描画し、選択・移動を扱う。
+ * @param props カウンターデータと操作コールバック
+ * @returns {JSX.Element} カウンター表示
+ */
 export function CounterView({ counter, selected, interactive, onSelect, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
   const onChangeRef = useRef(onChange);

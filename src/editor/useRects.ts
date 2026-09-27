@@ -9,8 +9,13 @@ import {
   type RectPatch,
 } from "./types";
 
+/** 追加を受け付ける枠の最短辺（px）。 */
 const MIN_RECT_SIZE = 16;
 
+/**
+ * 枠注釈の配列と選択状態を持つ。
+ * @returns {object} 追加・更新・削除と選択 id
+ */
 export function useRects() {
   const [rects, setRects] = useState<RectAnnotation[]>([]);
   const [selectedRectId, setSelectedRectId] = useState<string | null>(null);

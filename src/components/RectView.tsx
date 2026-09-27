@@ -3,6 +3,7 @@ import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
 import type { RectAnnotation, RectPatch } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** 矩形表示コンポーネントのプロパティ。 */
 type Props = {
   rect: RectAnnotation;
   selected?: boolean;
@@ -11,6 +12,7 @@ type Props = {
   onChange: (patch: RectPatch) => void;
 };
 
+/** 矩形移動のドラッグ状態。 */
 type DragState = {
   kind: "move";
   pointerId: number;
@@ -20,6 +22,11 @@ type DragState = {
   originY: number;
 };
 
+/**
+ * キャンバス上に矩形注釈を描画し、選択・移動を扱う。
+ * @param props 矩形データと操作コールバック
+ * @returns {JSX.Element} 矩形表示
+ */
 export function RectView({ rect, selected = false, interactive, onSelect, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
   const onChangeRef = useRef(onChange);

@@ -4,12 +4,18 @@ import { isPresetColor } from "@/lib/color";
 import { ANNOTATION_COLORS, ANNOTATION_STROKE_WIDTHS, type AnnotationStyle } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** 注釈の色・線幅コントロールのプロパティ。 */
 type Props = {
   style: AnnotationStyle;
   onChange: (patch: Partial<AnnotationStyle>) => void;
   label?: string;
 };
 
+/**
+ * 矢印・矩形など共通注釈の色と線幅を選ぶツールバーコントロール。
+ * @param props 現在のスタイルと変更コールバック
+ * @returns {JSX.Element} スタイル操作 UI
+ */
 export function AnnotationStyleControls({ style, onChange, label = "注釈" }: Props) {
   const customColor = !isPresetColor(style.color, ANNOTATION_COLORS);
 

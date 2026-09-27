@@ -2,8 +2,10 @@ import { useRef, type PointerEvent } from "react";
 import { cn } from "@/lib/utils";
 import type { CropRect } from "@/editor/types";
 
+/** クロップハンドルの種類。 */
 type Handle = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se" | "move";
 
+/** クロップオーバーレイのプロパティ。 */
 type Props = {
   crop: CropRect;
   layerWidth: number;
@@ -11,8 +13,16 @@ type Props = {
   onChange: (crop: CropRect) => void;
 };
 
+/** クロップ矩形の最小一辺（px）。 */
 const MIN = 16;
 
+/**
+ * クロップ矩形をレイヤー境界と最小サイズ内に収める。
+ * @param next 候補のクロップ矩形
+ * @param layerWidth レイヤー幅
+ * @param layerHeight レイヤー高さ
+ * @returns {CropRect} 補正後のクロップ矩形
+ */
 function clampCrop(next: CropRect, layerWidth: number, layerHeight: number): CropRect {
   const width = Math.min(layerWidth, Math.max(MIN, next.width));
   const height = Math.min(layerHeight, Math.max(MIN, next.height));
@@ -21,6 +31,11 @@ function clampCrop(next: CropRect, layerWidth: number, layerHeight: number): Cro
   return { x, y, width, height };
 }
 
+/**
+ * レイヤー上の切り抜き範囲をドラッグ編集するオーバーレイ。
+ * @param props 現在のクロップとレイヤー寸法
+ * @returns {JSX.Element} クロップ UI
+ */
 export function CropOverlay({ crop, layerWidth, layerHeight, onChange }: Props) {
   const dragRef = useRef<{
     handle: Handle;

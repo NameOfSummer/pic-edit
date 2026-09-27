@@ -67,3 +67,58 @@ npm run preview  # ビルド結果の確認
 - Tailwind CSS v4
 - shadcn/ui（Radix）
 - lucide-react
+
+## コーディング規約
+
+現状のソースに合わせた書き方です。
+
+### ディレクトリ
+
+| 場所 | 置くもの |
+| --- | --- |
+| `src/components/` | 画面部品。1 ファイル 1 コンポーネントで、ファイル名と export 名を揃える（`ArrowView.tsx`） |
+| `src/components/ui/` | shadcn/ui の生成物。アプリ側の書き方に合わせ直さない |
+| `src/editor/` | 注釈の型、状態フック、幾何、書き出し、履歴、クリップボード |
+| `src/lib/` | UI に依存しない小さな関数（`cn`、色） |
+| `src/assets/` | フォントなどの静的ファイル |
+
+画面の組み立ては `Editor.tsx` に置く。注釈ごとの状態は `useArrows` のように `src/editor/use*.ts` に分ける。
+
+### 注釈を足すとき
+
+種類ごとに次を揃える。
+
+- 型・初期値・選択肢は `src/editor/types.ts`（`ArrowAnnotation`、`ArrowPatch`、`DEFAULT_*`）
+- 追加・更新・削除は `use*` フック。新規 id は `crypto.randomUUID()`
+- 座標計算とキャンバス描画は `*Geometry.ts` の関数にする。React コンポーネントには置かない
+- 画面上の本体は `*View.tsx`、選択枠は `*SelectionChrome.tsx`、ツールバーの設定は `*StyleControls.tsx`
+- 履歴（`history.ts`）、書き出し（`export.ts`）、コピー（`annotationClipboard.ts`）、`Editor.tsx` のツール切り替えにも同じ種類を足す
+
+ドラッグ中の座標はビューポートの `clientX` / `clientY` をそのまま使い、確定値は `Math.round` する。更新はオブジェクト全体の差し替えではなく `Patch`（変更したフィールドだけ）で渡す。
+
+### TypeScript / React
+
+- named export のみ。`export default` は使わない
+- コンポーネントは `export function 名前()`。props の型はファイル内の `type Props`
+- ディレクトリをまたぐ import は `@/`（`@/editor/types`）。同じディレクトリ内は `./`
+- 型だけの import は `import type` か `import { type ... }`
+- 未使用の引数・変数は `_` で始める
+- Tailwind のクラスは静的な文字列にする。条件付きの結合は `cn()` を使う
+
+`strict`、未使用のローカルと引数の禁止、`npm run lint` に合わせる。チェックは `npm run lint` と `npm run typecheck`（`npm run build` も型チェックを含む）。
+
+### JSDoc
+
+`function` で宣言した関数には JSDoc を付ける。ファイルの直下にある `const` と `type` にも、何の定数・型かを説明する JSDoc を付ける。関数の中で作る定数は対象にしない。GAS は `const` を使わないので、ファイルの直下にある `var` の定数に同じ説明を付ける。説明は日本語にする。`npm run lint` は、次が欠けているとエラーにする。
+
+- 関数、定数、型の説明文
+- 関数で引数があるとき、引数ごとの `@param`
+- 関数の `@returns`。戻り値がない関数も `@returns {void}` と書く
+
+引数がない関数に `@param` は書かない。定数と型には `@param` と `@returns` を書かない。`sort` や `map` に渡す無名関数には付けない。引数をその場で分割代入している関数は、lint 上の引数名が `props` になる。
+
+### 依存関係
+
+- `.npmrc` の `min-release-age=7` と `ignore-scripts=true` を崩さない
+- `tsc` は TypeScript 7（`@typescript/native`）。`typescript` パッケージ名は ESLint 用の 6 系互換（`@typescript/typescript6`）のままにする。`typescript-eslint` は TypeScript 7 のコンパイラ API をまだ import できない
+- コミットメッセージは日本語。1 行目に変更の理由を書く

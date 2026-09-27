@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
+/** アプリ全体で使う sonner トースト表示コンポーネント。 */
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner

@@ -15,8 +15,10 @@ import type {
   TextAnnotation,
 } from "./types";
 
+/** 書き出し画像の周囲に足す余白（px）。 */
 export const EXPORT_PADDING_PX = 12;
 
+/** 画面座標での外接矩形。 */
 export type Bounds = {
   minX: number;
   minY: number;
@@ -24,6 +26,7 @@ export type Bounds = {
   maxY: number;
 };
 
+/** 書き出し対象の画像と注釈。注釈は省略できる。 */
 export type SceneDocument = {
   layers: ImageLayer[];
   arrows?: ArrowAnnotation[];
@@ -34,6 +37,11 @@ export type SceneDocument = {
   markers?: MarkerAnnotation[];
 };
 
+/**
+ * 回転後の画像四隅を返す。
+ * @param layer 画像レイヤー
+ * @returns {Array<{ x: number; y: number }>} 四隅
+ */
 function rotatedCorners(layer: ImageLayer): Array<{ x: number; y: number }> {
   const cx = layer.x + layer.width / 2;
   const cy = layer.y + layer.height / 2;
@@ -55,6 +63,11 @@ function rotatedCorners(layer: ImageLayer): Array<{ x: number; y: number }> {
   }));
 }
 
+/**
+ * 回転を含めた画像の外接矩形を返す。
+ * @param layer 画像レイヤー
+ * @returns {Bounds} 外接矩形
+ */
 export function getLayerBounds(layer: ImageLayer): Bounds {
   const corners = rotatedCorners(layer);
   return {
@@ -65,6 +78,11 @@ export function getLayerBounds(layer: ImageLayer): Bounds {
   };
 }
 
+/**
+ * 矢印の頭を含むおおまかな外接矩形を返す。
+ * @param arrow 矢印
+ * @returns {Bounds} 外接矩形
+ */
 function getArrowBounds(arrow: ArrowAnnotation): Bounds {
   const pad = arrow.strokeWidth * 4;
   return {
@@ -75,7 +93,18 @@ function getArrowBounds(arrow: ArrowAnnotation): Bounds {
   };
 }
 
-/** 画面座標での外接矩形（余白つき） */
+/**
+ * 画像と注釈をすべて含む、余白つきの外接矩形を返す。
+ * @param layers 画像
+ * @param arrows 矢印
+ * @param rects 枠
+ * @param texts テキスト
+ * @param counters カウンター
+ * @param mosaics モザイク
+ * @param markers マーカー
+ * @param padding 周囲の余白（px）
+ * @returns {Bounds | null} 中身が空なら null
+ */
 export function getExportBounds(
   layers: ImageLayer[],
   arrows: ArrowAnnotation[] = [],
@@ -167,7 +196,11 @@ export function getExportBounds(
   };
 }
 
-/** 各レイヤーの元解像度／表示サイズ比の最大値。レイアウト比を保ったまま元画素を活かす */
+/**
+ * 各レイヤーの元解像度と表示サイズの比の最大値を返す。
+ * @param layers 画像
+ * @returns {number} 1 以上の倍率
+ */
 export function getExportScale(layers: ImageLayer[]): number {
   let scale = 1;
   for (const layer of layers) {
@@ -178,6 +211,11 @@ export function getExportScale(layers: ImageLayer[]): number {
   return scale;
 }
 
+/**
+ * キャンバスを PNG の Blob にする。
+ * @param canvas 書き出し元
+ * @returns {Promise<Blob>} PNG
+ */
 function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -190,6 +228,11 @@ function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   });
 }
 
+/**
+ * 省略された注釈配列を空配列で埋める。
+ * @param doc シーン
+ * @returns {Required<SceneDocument>} 注釈が必ず配列のシーン
+ */
 function normalizeScene(doc: SceneDocument) {
   return {
     layers: doc.layers,
@@ -203,8 +246,10 @@ function normalizeScene(doc: SceneDocument) {
 }
 
 /**
- * 画面表示と同じ重ね順でシーンをオフスクリーン合成する。
- * 市松は描かず透明背景。
+ * 画面表示と同じ重ね順でシーンをオフスクリーン合成する。市松は描かず透明背景。
+ * @param doc 画像と注釈
+ * @param options 倍率と余白。省略時は元解像度相当と既定余白
+ * @returns {Promise<{ canvas: HTMLCanvasElement; bounds: Bounds } | null>} 中身が空なら null
  */
 export async function renderSceneToCanvas(
   doc: SceneDocument,
@@ -282,7 +327,17 @@ export async function renderSceneToCanvas(
   return { canvas, bounds };
 }
 
-/** 市松模様は描画せず、透明背景・元解像度相当の PNG を生成する */
+/**
+ * 透明背景・元解像度相当の PNG を作る。市松模様は描かない。
+ * @param layers 画像
+ * @param arrows 矢印
+ * @param rects 枠
+ * @param texts テキスト
+ * @param counters カウンター
+ * @param mosaics モザイク
+ * @param markers マーカー
+ * @returns {Promise<Blob>} PNG
+ */
 export async function renderLayersToPngBlob(
   layers: ImageLayer[],
   arrows: ArrowAnnotation[] = [],
@@ -302,6 +357,11 @@ export async function renderLayersToPngBlob(
   return canvasToPngBlob(rendered.canvas);
 }
 
+/**
+ * 書き出しファイル名を `pic_YYMMDDHHmmss.png` にする。
+ * @param date 使う日時
+ * @returns {string} ファイル名
+ */
 export function formatExportFilename(date = new Date()): string {
   const yy = String(date.getFullYear()).slice(-2);
   const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -312,6 +372,18 @@ export function formatExportFilename(date = new Date()): string {
   return `pic_${yy}${mm}${dd}${hh}${mi}${ss}.png`;
 }
 
+/**
+ * シーンを PNG としてダウンロードする。
+ * @param layers 画像
+ * @param arrows 矢印
+ * @param rects 枠
+ * @param texts テキスト
+ * @param counters カウンター
+ * @param mosaics モザイク
+ * @param markers マーカー
+ * @param filename 保存名
+ * @returns {Promise<void>}
+ */
 export async function downloadLayersAsPng(
   layers: ImageLayer[],
   arrows: ArrowAnnotation[] = [],
@@ -331,6 +403,17 @@ export async function downloadLayersAsPng(
   URL.revokeObjectURL(url);
 }
 
+/**
+ * シーンの PNG をクリップボードへコピーする。
+ * @param layers 画像
+ * @param arrows 矢印
+ * @param rects 枠
+ * @param texts テキスト
+ * @param counters カウンター
+ * @param mosaics モザイク
+ * @param markers マーカー
+ * @returns {Promise<void>}
+ */
 export async function copyLayersAsPng(
   layers: ImageLayer[],
   arrows: ArrowAnnotation[] = [],

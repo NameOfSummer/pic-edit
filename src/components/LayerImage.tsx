@@ -3,6 +3,7 @@ import { CropOverlay } from "@/components/CropOverlay";
 import { cn } from "@/lib/utils";
 import type { CropRect, ImageLayer, LayerPatch } from "@/editor/types";
 
+/** レイヤー画像コンポーネントのプロパティ。 */
 type Props = {
   layer: ImageLayer;
   selected: boolean;
@@ -14,6 +15,7 @@ type Props = {
   onCropChange: (crop: CropRect) => void;
 };
 
+/** レイヤー移動のドラッグ状態。 */
 type DragState = {
   kind: "move";
   pointerId: number;
@@ -23,6 +25,11 @@ type DragState = {
   originY: number;
 };
 
+/**
+ * キャンバス上の画像レイヤーを表示し、移動とクロップを扱う。
+ * @param props レイヤーデータと操作コールバック
+ * @returns {JSX.Element} レイヤー表示
+ */
 export function LayerImage({
   layer,
   selected: _selected,

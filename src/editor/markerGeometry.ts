@@ -4,6 +4,7 @@ import {
   type Point,
 } from "./types";
 
+/** マーカー線の外接矩形。 */
 export type Bounds = {
   minX: number;
   minY: number;
@@ -11,10 +12,20 @@ export type Bounds = {
   maxY: number;
 };
 
+/**
+ * マーカーの始点から終点までの長さを返す。
+ * @param marker 始点と終点
+ * @returns {number} 長さ（px）
+ */
 export function markerLength(marker: Pick<MarkerAnnotation, "x1" | "y1" | "x2" | "y2">): number {
   return Math.hypot(marker.x2 - marker.x1, marker.y2 - marker.y1);
 }
 
+/**
+ * 線の太さを含めたマーカーの外接矩形を返す。
+ * @param marker マーカー
+ * @returns {Bounds} 外接矩形
+ */
 export function getMarkerBounds(marker: MarkerAnnotation): Bounds {
   const pad = marker.strokeWidth / 2 + 2;
   return {
@@ -25,7 +36,13 @@ export function getMarkerBounds(marker: MarkerAnnotation): Bounds {
   };
 }
 
-/** 描画終了時に直線へ補正。Shift または 45° 近傍なら角度スナップ */
+/**
+ * 描画終了時に直線へ補正する。Shift または 45° の近傍なら角度をスナップする。
+ * @param from 始点
+ * @param to 終点
+ * @param options Shift とスナップ許容角度。省略時は 10°
+ * @returns {{ x1: number; y1: number; x2: number; y2: number }} 補正後の端点
+ */
 export function straightenMarkerLine(
   from: Point,
   to: Point,
@@ -60,6 +77,12 @@ export function straightenMarkerLine(
   };
 }
 
+/**
+ * 中点を軸にマーカーの両端を回転する。
+ * @param marker 回転するマーカー
+ * @param degreesDelta 足す角度（度）
+ * @returns {Pick<MarkerAnnotation, "x1" | "y1" | "x2" | "y2">} 回転後の端点
+ */
 export function rotateMarkerEndpoints(
   marker: MarkerAnnotation,
   degreesDelta: number,
@@ -84,6 +107,15 @@ export function rotateMarkerEndpoints(
   return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y };
 }
 
+/**
+ * 書き出しキャンバスに半透明のマーカーを描く。
+ * @param ctx 描画先
+ * @param marker マーカー
+ * @param offsetX 書き出し原点 X
+ * @param offsetY 書き出し原点 Y
+ * @param scale 表示サイズに対する倍率
+ * @returns {void}
+ */
 export function drawMarkerOnCanvas(
   ctx: CanvasRenderingContext2D,
   marker: MarkerAnnotation,

@@ -6,11 +6,13 @@ import { rotateMarkerEndpoints } from "@/editor/markerGeometry";
 import type { MarkerAnnotation, MarkerPatch } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** マーカー選択クロームのプロパティ。 */
 type Props = {
   marker: MarkerAnnotation;
   onChange: (patch: MarkerPatch) => void;
 };
 
+/** リサイズまたは回転のドラッグ状態。 */
 type DragState =
   | {
       kind: "resize";
@@ -36,15 +38,29 @@ type DragState =
 
 /** マーカー本体とハンドルのあいだの余白 */
 const CHROME_PAD = 16;
+/** マーカー線幅の下限（px）。 */
 const MIN_STROKE = 8;
+/** マーカー線幅の上限（px）。 */
 const MAX_STROKE = 64;
+/** マーカー線長の下限（px）。 */
 const MIN_LENGTH = 24;
 
+/**
+ * 角度を 0〜360 の範囲に正規化する。
+ * @param value 入力角度（度）
+ * @returns {number} 正規化後の角度
+ */
 function normalizeDegrees(value: number): number {
   const wrapped = value % 360;
   return wrapped < 0 ? wrapped + 360 : wrapped;
 }
 
+/**
+ * Shift 押下時は 15° 刻みにスナップした回転差分を返す。
+ * @param degrees 生の回転差分
+ * @param shiftKey Shift キーが押されているか
+ * @returns {number} スナップ後の差分
+ */
 function snapRotation(degrees: number, shiftKey: boolean): number {
   if (!shiftKey) {
     return degrees;
@@ -52,11 +68,22 @@ function snapRotation(degrees: number, shiftKey: boolean): number {
   return Math.round(degrees / 15) * 15;
 }
 
+/**
+ * 値を指定範囲に収める。
+ * @param value 入力値
+ * @param min 下限
+ * @param max 上限
+ * @returns {number} クランプ後の値
+ */
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-/** 線＋太さを含むインク領域（クローム余白なし） */
+/**
+ * 線＋太さを含むインク領域（クローム余白なし）。
+ * @param marker 対象のマーカー注釈
+ * @returns {{ x: number, y: number, width: number, height: number }} インク領域の矩形
+ */
 function markerInkBox(marker: MarkerAnnotation) {
   const half = marker.strokeWidth / 2;
   const minX = Math.min(marker.x1, marker.x2);
@@ -71,6 +98,11 @@ function markerInkBox(marker: MarkerAnnotation) {
   };
 }
 
+/**
+ * 選択クローム用の余白付き矩形を求める。
+ * @param marker 対象のマーカー注釈
+ * @returns {{ x: number, y: number, width: number, height: number }} クローム矩形
+ */
 function markerChromeBox(marker: MarkerAnnotation) {
   const ink = markerInkBox(marker);
   return {
@@ -81,6 +113,13 @@ function markerChromeBox(marker: MarkerAnnotation) {
   };
 }
 
+/**
+ * クローム矩形の変更をマーカー端点・線幅のパッチへ変換する。
+ * @param box 余白込みのクローム矩形
+ * @param angle マーカーの向き（ラジアン）
+ * @param moreHorizontal 水平寄りのマーカーかどうか
+ * @returns {MarkerPatch} マーカー更新パッチ
+ */
 function chromeBoxToMarkerPatch(
   box: { x: number; y: number; width: number; height: number },
   angle: number,
@@ -113,7 +152,11 @@ function chromeBoxToMarkerPatch(
   };
 }
 
-/** マーカーの選択枠・回転・リサイズ。注釈本体より前面に重ねる。 */
+/**
+ * マーカーの選択枠・回転・リサイズ。注釈本体より前面に重ねる。
+ * @param props 対象マーカーと変更コールバック
+ * @returns {JSX.Element} 選択クローム UI
+ */
 export function MarkerSelectionChrome({ marker, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
   const chrome = markerChromeBox(marker);

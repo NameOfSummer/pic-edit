@@ -8,8 +8,10 @@ import {
 } from "@/editor/boxResize";
 import { cn } from "@/lib/utils";
 
+/** 選択クロームを注釈本体より前面に重ねるための z-index。 */
 export const SELECTION_CHROME_Z = 10000;
 
+/** 矩形系選択クロームのプロパティ。 */
 type Props = {
   x: number;
   y: number;
@@ -22,6 +24,7 @@ type Props = {
   onChange: (patch: { x: number; y: number; width: number; height: number } | { rotation: number }) => void;
 };
 
+/** リサイズまたは回転のドラッグ状態。 */
 type DragState =
   | {
       kind: "resize";
@@ -44,11 +47,22 @@ type DragState =
       originRotation: number;
     };
 
+/**
+ * 角度を 0〜360 の範囲に正規化する。
+ * @param value 入力角度（度）
+ * @returns {number} 正規化後の角度
+ */
 function normalizeDegrees(value: number): number {
   const wrapped = value % 360;
   return wrapped < 0 ? wrapped + 360 : wrapped;
 }
 
+/**
+ * Shift 押下時は 15° 刻みにスナップした回転角を返す。
+ * @param degrees 生の回転角
+ * @param shiftKey Shift キーが押されているか
+ * @returns {number} スナップ後の角度
+ */
 function snapRotation(degrees: number, shiftKey: boolean): number {
   if (!shiftKey) {
     return normalizeDegrees(degrees);
@@ -56,7 +70,11 @@ function snapRotation(degrees: number, shiftKey: boolean): number {
   return normalizeDegrees(Math.round(degrees / 15) * 15);
 }
 
-/** 選択枠・回転・辺/角リサイズ。本体より前面に重ね、ハンドルだけ操作可能。 */
+/**
+ * 選択枠・回転・辺/角リサイズ。本体より前面に重ね、ハンドルだけ操作可能。
+ * @param props 対象矩形の位置・サイズと変更コールバック
+ * @returns {JSX.Element} 選択クローム UI
+ */
 export function BoxSelectionChrome({
   x,
   y,

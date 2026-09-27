@@ -77,9 +77,15 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+/** 右クリックメニューの対象（キャンバス・レイヤー・各注釈）。 */
 type ContextTarget = "canvas" | "layer" | "arrow" | "rect" | "text" | "counter" | "mosaic" | "marker";
+/** ドラッグ描画中の始点・終点を表す下書き線。 */
 type DraftLine = { x1: number; y1: number; x2: number; y2: number };
 
+/**
+ * 画像注釈エディタのメイン画面。レイヤー・注釈・ツールバーをまとめて扱う。
+ * @returns {JSX.Element} エディタ UI
+ */
 export function Editor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
@@ -1924,6 +1930,11 @@ export function Editor() {
   );
 }
 
+/**
+ * ドラッグ＆ドロップの DataTransfer に画像が含まれているか判定する。
+ * @param dataTransfer 判定対象の DataTransfer
+ * @returns {boolean} 画像ペイロードがあるとき true
+ */
 function hasImagePayload(dataTransfer: DataTransfer): boolean {
   return Array.from(dataTransfer.types).some((type) => type === "Files" || type.startsWith("image/"));
 }

@@ -2,14 +2,20 @@ import { useRef, type PointerEvent } from "react";
 import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
 import type { ArrowAnnotation, ArrowPatch } from "@/editor/types";
 
+/** 矢印選択クロームのプロパティ。 */
 type Props = {
   arrow: ArrowAnnotation;
   onChange: (patch: ArrowPatch) => void;
 };
 
+/** 端点ドラッグ中の状態。 */
 type DragState = { kind: "start" | "end"; pointerId: number };
 
-/** 矢印の端点ハンドル。注釈本体より前面に重ねる。 */
+/**
+ * 矢印の端点ハンドル。注釈本体より前面に重ねる。
+ * @param props 対象の矢印と変更コールバック
+ * @returns {JSX.Element} 端点ハンドル UI
+ */
 export function ArrowSelectionChrome({ arrow, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
 

@@ -1,5 +1,6 @@
 import type { CropRect, ImageLayer, Point } from "./types";
 
+/** 画像として受け付ける MIME タイプ。 */
 const IMAGE_TYPES = new Set([
   "image/png",
   "image/jpeg",
@@ -10,6 +11,11 @@ const IMAGE_TYPES = new Set([
   "image/svg+xml",
 ]);
 
+/**
+ * ファイルが画像か判定する。
+ * @param file 判定するファイル
+ * @returns {boolean} 画像なら true
+ */
 export function isImageFile(file: File): boolean {
   if (IMAGE_TYPES.has(file.type)) {
     return true;
@@ -17,6 +23,11 @@ export function isImageFile(file: File): boolean {
   return file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(file.name);
 }
 
+/**
+ * ファイル一覧から画像だけを集める。
+ * @param files 入力。なければ空
+ * @returns {File[]} 画像ファイル
+ */
 export function collectImageFiles(files: FileList | File[] | DataTransferItemList | null): File[] {
   if (!files) {
     return [];
@@ -46,6 +57,11 @@ export function collectImageFiles(files: FileList | File[] | DataTransferItemLis
   return collected;
 }
 
+/**
+ * 貼り付けデータ、なければシステムクリップボードから画像を集める。
+ * @param clipboardData paste イベントの DataTransfer
+ * @returns {Promise<File[]>} 画像ファイル。読めなければ空
+ */
 export async function collectClipboardImages(clipboardData: DataTransfer | null): Promise<File[]> {
   const fromEvent = collectClipboardImagesFromEvent(clipboardData);
   if (fromEvent.length > 0) {
@@ -74,7 +90,11 @@ export async function collectClipboardImages(clipboardData: DataTransfer | null)
   }
 }
 
-/** paste イベントの DataTransfer だけを見る（システムクリップボードの古い画像は拾わない） */
+/**
+ * paste イベントの DataTransfer だけを見る。システムクリップボードの古い画像は拾わない。
+ * @param clipboardData paste イベントの DataTransfer
+ * @returns {File[]} そのイベントに含まれていた画像
+ */
 export function collectClipboardImagesFromEvent(clipboardData: DataTransfer | null): File[] {
   const fromItems = collectImageFiles(clipboardData?.items ?? null);
   if (fromItems.length > 0) {
@@ -83,6 +103,11 @@ export function collectClipboardImagesFromEvent(clipboardData: DataTransfer | nu
   return collectImageFiles(clipboardData?.files ?? null);
 }
 
+/**
+ * URL から HTMLImageElement を読み込む。
+ * @param src 画像 URL
+ * @returns {Promise<HTMLImageElement>} 読み込み済みの画像
+ */
 export function loadHtmlImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -92,6 +117,14 @@ export function loadHtmlImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+/**
+ * 縦横比を保ったまま、指定サイズに収まる表示サイズを返す。
+ * @param naturalWidth 元の幅
+ * @param naturalHeight 元の高さ
+ * @param maxWidth 表示の最大幅
+ * @param maxHeight 表示の最大高さ
+ * @returns {{ width: number; height: number }} 収めたサイズ
+ */
 export function fitSize(
   naturalWidth: number,
   naturalHeight: number,
@@ -105,6 +138,11 @@ export function fitSize(
   };
 }
 
+/**
+ * キャンバスを PNG の object URL にする。
+ * @param canvas 書き出し元
+ * @returns {Promise<string>} object URL
+ */
 async function canvasToObjectUrl(canvas: HTMLCanvasElement): Promise<string> {
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((result) => {
@@ -118,7 +156,12 @@ async function canvasToObjectUrl(canvas: HTMLCanvasElement): Promise<string> {
   return URL.createObjectURL(blob);
 }
 
-/** 表示矩形上の crop を元画像座標に写し、切り出した画像を返す */
+/**
+ * 表示矩形上の crop を元画像座標に写し、切り出した画像を返す。
+ * @param layer 切り出すレイヤー
+ * @param crop 表示座標での範囲
+ * @returns {Promise<{ src: string; naturalWidth: number; naturalHeight: number; width: number; height: number }>} 切り出し結果
+ */
 export async function cropImageSrc(
   layer: ImageLayer,
   crop: CropRect,
@@ -151,6 +194,13 @@ export async function cropImageSrc(
   };
 }
 
+/**
+ * 画像ファイルを、ビューポートに収まるレイヤーにする。
+ * @param files 配置する画像
+ * @param origin 最初のレイヤーの左上
+ * @param viewport 画面サイズ。収める上限に使う
+ * @returns {Promise<ImageLayer[]>} 新しいレイヤー
+ */
 export async function filesToLayers(files: File[], origin: Point, viewport: Point): Promise<ImageLayer[]> {
   const maxWidth = Math.max(160, viewport.x * 0.72);
   const maxHeight = Math.max(160, viewport.y * 0.72);

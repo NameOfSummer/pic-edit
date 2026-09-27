@@ -4,6 +4,7 @@ import { renderMosaicPreview } from "@/editor/mosaicGeometry";
 import type { ImageLayer, MosaicAnnotation, MosaicPatch } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
+/** モザイク表示コンポーネントのプロパティ。 */
 type Props = {
   mosaic: MosaicAnnotation;
   layers: ImageLayer[];
@@ -13,6 +14,7 @@ type Props = {
   onChange: (patch: MosaicPatch) => void;
 };
 
+/** モザイク移動のドラッグ状態。 */
 type DragState = {
   kind: "move";
   pointerId: number;
@@ -22,6 +24,11 @@ type DragState = {
   originY: number;
 };
 
+/**
+ * キャンバス上にモザイク注釈を描画し、選択・移動を扱う。
+ * @param props モザイクデータと操作コールバック
+ * @returns {JSX.Element} モザイク表示
+ */
 export function MosaicView({ mosaic, layers, selected = false, interactive, onSelect, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
   const onChangeRef = useRef(onChange);

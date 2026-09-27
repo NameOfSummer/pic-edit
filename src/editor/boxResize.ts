@@ -1,7 +1,7 @@
-/** 矩形ボックスの辺・角リサイズ（ローカル座標、回転は呼び出し側で打ち消す） */
-
+/** 矩形の辺・角を示すハンドル名。 */
 export type ResizeHandle = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
+/** リサイズ前の矩形。回転は含まない。 */
 export type BoxRect = {
   x: number;
   y: number;
@@ -9,6 +9,7 @@ export type BoxRect = {
   height: number;
 };
 
+/** 選択枠に置くリサイズハンドルの位置とカーソル。 */
 export const BOX_RESIZE_HANDLES: { id: ResizeHandle; className: string }[] = [
   { id: "nw", className: "-left-1.5 -top-1.5 cursor-nwse-resize" },
   { id: "ne", className: "-right-1.5 -top-1.5 cursor-nesw-resize" },
@@ -20,7 +21,13 @@ export const BOX_RESIZE_HANDLES: { id: ResizeHandle; className: string }[] = [
   { id: "e", className: "-right-1.5 top-1/2 -translate-y-1/2 cursor-ew-resize" },
 ];
 
-/** 画面上の移動量を、回転前のローカル座標の移動量に変換する */
+/**
+ * 画面上の移動量を、回転前のローカル座標の移動量に変換する。
+ * @param dx 画面上の X 移動
+ * @param dy 画面上の Y 移動
+ * @param rotationDeg 矩形の時計回り角度
+ * @returns {{ x: number; y: number }} ローカル座標の移動量
+ */
 export function screenDeltaToLocal(dx: number, dy: number, rotationDeg: number): { x: number; y: number } {
   const radians = (-rotationDeg * Math.PI) / 180;
   const cos = Math.cos(radians);
@@ -31,6 +38,12 @@ export function screenDeltaToLocal(dx: number, dy: number, rotationDeg: number):
   };
 }
 
+/**
+ * ハンドルのドラッグ量から、最小サイズを守った新しい矩形を返す。
+ * 回転は呼び出し側で打ち消したローカル移動量を渡す。
+ * @param options ハンドル、元矩形、ローカル移動量、最小サイズ
+ * @returns {BoxRect} リサイズ後の矩形
+ */
 export function applyBoxResize(options: {
   handle: ResizeHandle;
   origin: BoxRect;

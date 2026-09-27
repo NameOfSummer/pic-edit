@@ -1,6 +1,7 @@
 import { useEffect, useRef, type PointerEvent } from "react";
 import type { SceneColorSampler } from "@/editor/eyedropper";
 
+/** スポイトオーバーレイのプロパティ。 */
 type Props = {
   sampler: SceneColorSampler;
   previewColor: string | null;
@@ -9,7 +10,11 @@ type Props = {
   onCancel: () => void;
 };
 
-/** 全画面オーバーレイでキャンバス上の色をスポイトする */
+/**
+ * 全画面オーバーレイでキャンバス上の色をスポイトする。
+ * @param props サンプラーとプレビュー／確定／キャンセルコールバック
+ * @returns {JSX.Element} スポイト UI
+ */
 export function EyedropperOverlay({
   sampler,
   previewColor,
