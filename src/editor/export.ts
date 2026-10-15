@@ -357,6 +357,9 @@ export async function renderLayersToPngBlob(
   return canvasToPngBlob(rendered.canvas);
 }
 
+/** クリップボード由来などで、元ファイル名として使わない仮名の本体。 */
+const PLACEHOLDER_EXPORT_STEMS = new Set(["image", "paste"]);
+
 /**
  * 書き出しファイル名を `pic_YYMMDDHHmmss.png` にする。
  * @param date 使う日時
@@ -373,6 +376,53 @@ export function formatExportFilename(date = new Date()): string {
 }
 
 /**
+ * レイヤー名から、保存に使う拡張子なしの名前を取り出す。
+ * 空、`image.png`、`paste.png` のような仮名は null。
+ * @param name レイヤーのファイル名
+ * @returns {string | null} 使える名前。仮名なら null
+ */
+function keptExportStem(name: string): string | null {
+  const base = name.trim().split(/[/\\]/).pop()?.trim() ?? "";
+  if (!base || base === "." || base === "..") {
+    return null;
+  }
+  const stem = base.replace(/\.[^.]+$/, "").trim();
+  if (!stem || stem === "." || stem === ".." || PLACEHOLDER_EXPORT_STEMS.has(stem.toLowerCase())) {
+    return null;
+  }
+  const safe = [...stem]
+    .filter((char) => {
+      const code = char.codePointAt(0) ?? 0;
+      return code > 31 && !"<>:\"|?*".includes(char);
+    })
+    .join("")
+    .trim();
+  if (!safe || PLACEHOLDER_EXPORT_STEMS.has(safe.toLowerCase())) {
+    return null;
+  }
+  return safe;
+}
+
+/**
+ * ダウンロードファイル名を決める。
+ * 画像が1枚で元の名前があるときだけそれを使い、拡張子は png にする。
+ * 名前が空・仮名、または画像が複数のときは日時名にする。
+ * @param layers 画像
+ * @param date 日時名に使う日時
+ * @returns {string} ファイル名
+ */
+export function formatExportFilenameForLayers(layers: ImageLayer[], date = new Date()): string {
+  if (layers.length !== 1) {
+    return formatExportFilename(date);
+  }
+  const stem = keptExportStem(layers[0]?.name ?? "");
+  if (!stem) {
+    return formatExportFilename(date);
+  }
+  return `${stem}.png`;
+}
+
+/**
  * シーンを PNG としてダウンロードする。
  * @param layers 画像
  * @param arrows 矢印
@@ -381,7 +431,7 @@ export function formatExportFilename(date = new Date()): string {
  * @param counters カウンター
  * @param mosaics モザイク
  * @param markers マーカー
- * @param filename 保存名
+ * @param filename 保存名。省略時は元ファイル名、なければ日時名
  * @returns {Promise<void>}
  */
 export async function downloadLayersAsPng(
@@ -392,13 +442,13 @@ export async function downloadLayersAsPng(
   counters: CounterAnnotation[] = [],
   mosaics: MosaicAnnotation[] = [],
   markers: MarkerAnnotation[] = [],
-  filename = formatExportFilename(),
+  filename?: string,
 ): Promise<void> {
   const blob = await renderLayersToPngBlob(layers, arrows, rects, texts, counters, mosaics, markers);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = filename;
+  anchor.download = filename ?? formatExportFilenameForLayers(layers);
   anchor.click();
   URL.revokeObjectURL(url);
 }
