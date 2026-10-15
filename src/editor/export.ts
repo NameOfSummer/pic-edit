@@ -390,7 +390,13 @@ function keptExportStem(name: string): string | null {
   if (!stem || stem === "." || stem === ".." || PLACEHOLDER_EXPORT_STEMS.has(stem.toLowerCase())) {
     return null;
   }
-  const safe = stem.replace(/[<>:"|?*\u0000-\u001f]/g, "").trim();
+  const safe = [...stem]
+    .filter((char) => {
+      const code = char.codePointAt(0) ?? 0;
+      return code > 31 && !"<>:\"|?*".includes(char);
+    })
+    .join("")
+    .trim();
   if (!safe || PLACEHOLDER_EXPORT_STEMS.has(safe.toLowerCase())) {
     return null;
   }
