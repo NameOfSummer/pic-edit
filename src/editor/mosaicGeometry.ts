@@ -74,9 +74,13 @@ export function pixelateCanvas(canvas: HTMLCanvasElement, blockSize: number): vo
   }
   smallCtx.imageSmoothingEnabled = true;
   smallCtx.drawImage(canvas, 0, 0, sw, sh);
+  // 呼び出し元の変換行列のまま描くと、ブロックがモザイク範囲の外へずれる。
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, width, height);
   ctx.drawImage(small, 0, 0, width, height);
+  ctx.restore();
 }
 
 /**
@@ -109,10 +113,12 @@ export function drawMosaicOnCanvas(
     return;
   }
 
+  tempCtx.save();
   tempCtx.translate(width / 2, height / 2);
   tempCtx.rotate((-mosaic.rotation * Math.PI) / 180);
   tempCtx.translate(-centerX, -centerY);
   tempCtx.drawImage(ctx.canvas, 0, 0);
+  tempCtx.restore();
   pixelateCanvas(temp, block);
 
   ctx.save();
