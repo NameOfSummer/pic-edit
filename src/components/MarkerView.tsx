@@ -1,5 +1,6 @@
 import { useEffect, useRef, type PointerEvent } from "react";
 import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
+import { MARKER_CORNER_RADIUS } from "@/editor/markerGeometry";
 import { MARKER_OPACITY, type MarkerAnnotation, type MarkerPatch } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +87,12 @@ export function MarkerView({ marker, selected = false, interactive, onSelect, on
     };
   };
 
+  const length = Math.hypot(marker.x2 - marker.x1, marker.y2 - marker.y1);
+  const angle = (Math.atan2(marker.y2 - marker.y1, marker.x2 - marker.x1) * 180) / Math.PI;
+  const centerX = (marker.x1 + marker.x2) / 2 - minX;
+  const centerY = (marker.y1 + marker.y2) / 2 - minY;
+  const corner = Math.min(MARKER_CORNER_RADIUS, marker.strokeWidth / 2, length / 2);
+
   return (
     <div
       data-marker-id={marker.id}
@@ -93,15 +100,16 @@ export function MarkerView({ marker, selected = false, interactive, onSelect, on
       style={{ left: minX, top: minY, width, height, zIndex: selected ? SELECTION_CHROME_Z - 1 : 3870 }}
     >
       <svg width={width} height={height} className="overflow-visible">
-        <line
-          x1={marker.x1 - minX}
-          y1={marker.y1 - minY}
-          x2={marker.x2 - minX}
-          y2={marker.y2 - minY}
-          stroke={marker.color}
-          strokeWidth={marker.strokeWidth}
-          strokeLinecap="round"
+        <rect
+          x={centerX - length / 2}
+          y={centerY - marker.strokeWidth / 2}
+          width={Math.max(1, length)}
+          height={marker.strokeWidth}
+          rx={corner}
+          ry={corner}
+          fill={marker.color}
           opacity={MARKER_OPACITY}
+          transform={`rotate(${angle} ${centerX} ${centerY})`}
           style={{ mixBlendMode: "multiply" }}
           className={interactive ? "cursor-move" : undefined}
           onPointerDown={onMovePointerDown}
@@ -113,7 +121,7 @@ export function MarkerView({ marker, selected = false, interactive, onSelect, on
           y2={marker.y2 - minY}
           stroke="transparent"
           strokeWidth={Math.max(24, marker.strokeWidth)}
-          strokeLinecap="round"
+          strokeLinecap="butt"
           className={interactive ? "cursor-move" : undefined}
           onPointerDown={onMovePointerDown}
         />

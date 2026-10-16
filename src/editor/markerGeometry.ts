@@ -4,6 +4,9 @@ import {
   type Point,
 } from "./types";
 
+/** マーカー端の角丸（px）。 */
+export const MARKER_CORNER_RADIUS = 4;
+
 /** マーカー線の外接矩形。 */
 export type Bounds = {
   minX: number;
@@ -27,12 +30,29 @@ export function markerLength(marker: Pick<MarkerAnnotation, "x1" | "y1" | "x2" |
  * @returns {Bounds} 外接矩形
  */
 export function getMarkerBounds(marker: MarkerAnnotation): Bounds {
-  const pad = marker.strokeWidth / 2 + 2;
+  const cx = (marker.x1 + marker.x2) / 2;
+  const cy = (marker.y1 + marker.y2) / 2;
+  const halfL = markerLength(marker) / 2;
+  const halfH = marker.strokeWidth / 2;
+  const angle = Math.atan2(marker.y2 - marker.y1, marker.x2 - marker.x1);
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const locals = [
+    { x: -halfL, y: -halfH },
+    { x: halfL, y: -halfH },
+    { x: halfL, y: halfH },
+    { x: -halfL, y: halfH },
+  ];
+  const corners = locals.map((point) => ({
+    x: cx + point.x * cos - point.y * sin,
+    y: cy + point.x * sin + point.y * cos,
+  }));
+  const pad = 2;
   return {
-    minX: Math.min(marker.x1, marker.x2) - pad,
-    minY: Math.min(marker.y1, marker.y2) - pad,
-    maxX: Math.max(marker.x1, marker.x2) + pad,
-    maxY: Math.max(marker.y1, marker.y2) + pad,
+    minX: Math.min(...corners.map((point) => point.x)) - pad,
+    minY: Math.min(...corners.map((point) => point.y)) - pad,
+    maxX: Math.max(...corners.map((point) => point.x)) + pad,
+    maxY: Math.max(...corners.map((point) => point.y)) + pad,
   };
 }
 
@@ -78,33 +98,36 @@ export function straightenMarkerLine(
 }
 
 /**
- * 中点を軸にマーカーの両端を回転する。
- * @param marker 回転するマーカー
- * @param degreesDelta 足す角度（度）
+ * マーカーの向きを度で返す。右向きが 0、時計回りが正。
+ * @param marker 端点
+ * @returns {number} 角度（度）
+ */
+export function markerAngleDegrees(marker: Pick<MarkerAnnotation, "x1" | "y1" | "x2" | "y2">): number {
+  return (Math.atan2(marker.y2 - marker.y1, marker.x2 - marker.x1) * 180) / Math.PI;
+}
+
+/**
+ * 中点と長さを保ったまま、指定角度へマーカーを置き直す。
+ * @param marker 元のマーカー
+ * @param degrees 新しい向き（度）
  * @returns {Pick<MarkerAnnotation, "x1" | "y1" | "x2" | "y2">} 回転後の端点
  */
-export function rotateMarkerEndpoints(
+export function placeMarkerAtAngle(
   marker: MarkerAnnotation,
-  degreesDelta: number,
+  degrees: number,
 ): Pick<MarkerAnnotation, "x1" | "y1" | "x2" | "y2"> {
   const cx = (marker.x1 + marker.x2) / 2;
   const cy = (marker.y1 + marker.y2) / 2;
-  const radians = (degreesDelta * Math.PI) / 180;
+  const half = markerLength(marker) / 2;
+  const radians = (degrees * Math.PI) / 180;
   const cos = Math.cos(radians);
   const sin = Math.sin(radians);
-
-  const rotate = (x: number, y: number) => {
-    const dx = x - cx;
-    const dy = y - cy;
-    return {
-      x: Math.round(cx + dx * cos - dy * sin),
-      y: Math.round(cy + dx * sin + dy * cos),
-    };
+  return {
+    x1: Math.round(cx - cos * half),
+    y1: Math.round(cy - sin * half),
+    x2: Math.round(cx + cos * half),
+    y2: Math.round(cy + sin * half),
   };
-
-  const p1 = rotate(marker.x1, marker.y1);
-  const p2 = rotate(marker.x2, marker.y2);
-  return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y };
 }
 
 /**
@@ -127,18 +150,18 @@ export function drawMarkerOnCanvas(
   const y1 = (marker.y1 - offsetY) * scale;
   const x2 = (marker.x2 - offsetX) * scale;
   const y2 = (marker.y2 - offsetY) * scale;
-  const width = Math.max(1, marker.strokeWidth * scale);
+  const length = Math.max(1, Math.hypot(x2 - x1, y2 - y1));
+  const thickness = Math.max(1, marker.strokeWidth * scale);
+  const radius = Math.min(MARKER_CORNER_RADIUS * scale, thickness / 2, length / 2);
 
   ctx.save();
   ctx.globalAlpha = MARKER_OPACITY;
   ctx.globalCompositeOperation = "multiply";
-  ctx.strokeStyle = marker.color;
-  ctx.lineWidth = width;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  ctx.fillStyle = marker.color;
+  ctx.translate((x1 + x2) / 2, (y1 + y2) / 2);
+  ctx.rotate(Math.atan2(y2 - y1, x2 - x1));
   ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
+  ctx.roundRect(-length / 2, -thickness / 2, length, thickness, radius);
+  ctx.fill();
   ctx.restore();
 }

@@ -41,7 +41,7 @@ import {
   shiftAnnotationClipboard,
   type AnnotationClipboard,
 } from "@/editor/annotationClipboard";
-import { copyLayersAsPng, downloadLayersAsPng } from "@/editor/export";
+import { copyLayersAsPng, downloadLayersAsPng, getExportBounds } from "@/editor/export";
 import { createHistoryController, type EditorSnapshot } from "@/editor/history";
 import { normalizeRectFromDrag } from "@/editor/rectGeometry";
 import { getTextBoxSize, MIN_TEXT_BOX_HEIGHT, MIN_TEXT_BOX_WIDTH } from "@/editor/textGeometry";
@@ -1206,6 +1206,7 @@ export function Editor() {
   const draftMosaicBox = draftMosaic
     ? normalizeRectFromDrag(draftMosaic.x1, draftMosaic.y1, draftMosaic.x2, draftMosaic.y2)
     : null;
+  const exportBounds = getExportBounds(layers, arrows, rects, texts, counters, mosaics, markers);
 
   return (
     <EyedropperContext.Provider value={{ startEyedropper }}>
@@ -1343,6 +1344,34 @@ export function Editor() {
           }}
         >
           <div className="checkerboard absolute inset-0" aria-hidden="true" />
+
+          {exportBounds && (
+            <>
+              <div
+                className="pointer-events-none absolute box-border border border-black/25"
+                style={{
+                  left: exportBounds.minX,
+                  top: exportBounds.minY,
+                  width: exportBounds.maxX - exportBounds.minX,
+                  height: exportBounds.maxY - exportBounds.minY,
+                  zIndex: 2,
+                }}
+                aria-hidden="true"
+              />
+              <span
+                className="pointer-events-none absolute text-[8px] leading-none whitespace-nowrap text-black/45"
+                style={{
+                  left: exportBounds.minX,
+                  top: exportBounds.minY - 2,
+                  transform: "translateY(-100%)",
+                  zIndex: 2,
+                }}
+                aria-hidden="true"
+              >
+                Export area
+              </span>
+            </>
+          )}
 
           {isDragOver && (
             <div
