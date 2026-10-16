@@ -1,8 +1,8 @@
 import { useRef, type PointerEvent } from "react";
 import { RotateCw } from "lucide-react";
 import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
-import { applyBoxResize, BOX_RESIZE_HANDLES, type ResizeHandle } from "@/editor/boxResize";
-import { rotateMarkerEndpoints } from "@/editor/markerGeometry";
+import { BOX_RESIZE_HANDLES, screenDeltaToLocal, type ResizeHandle } from "@/editor/boxResize";
+import { markerAngleDegrees, markerLength, placeMarkerAtAngle } from "@/editor/markerGeometry";
 import type { MarkerAnnotation, MarkerPatch } from "@/editor/types";
 import { cn } from "@/lib/utils";
 
@@ -20,12 +20,11 @@ type DragState =
       handle: ResizeHandle;
       startX: number;
       startY: number;
-      originX: number;
-      originY: number;
-      originWidth: number;
-      originHeight: number;
+      centerX: number;
+      centerY: number;
+      length: number;
+      stroke: number;
       angle: number;
-      moreHorizontal: boolean;
     }
   | {
       kind: "rotate";
@@ -33,11 +32,10 @@ type DragState =
       centerX: number;
       centerY: number;
       startAngle: number;
+      originAngle: number;
       origin: MarkerAnnotation;
     };
 
-/** マーカー本体とハンドルのあいだの余白 */
-const CHROME_PAD = 16;
 /** マーカー線幅の下限（px）。 */
 const MIN_STROKE = 8;
 /** マーカー線幅の上限（px）。 */
@@ -56,16 +54,16 @@ function normalizeDegrees(value: number): number {
 }
 
 /**
- * Shift 押下時は 15° 刻みにスナップした回転差分を返す。
- * @param degrees 生の回転差分
+ * Shift 押下時は 15° 刻みにスナップした回転角を返す。
+ * @param degrees 生の回転角
  * @param shiftKey Shift キーが押されているか
- * @returns {number} スナップ後の差分
+ * @returns {number} スナップ後の角度
  */
 function snapRotation(degrees: number, shiftKey: boolean): number {
   if (!shiftKey) {
-    return degrees;
+    return normalizeDegrees(degrees);
   }
-  return Math.round(degrees / 15) * 15;
+  return normalizeDegrees(Math.round(degrees / 15) * 15);
 }
 
 /**
@@ -80,90 +78,18 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- * 線＋太さを含むインク領域（クローム余白なし）。
- * @param marker 対象のマーカー注釈
- * @returns {{ x: number, y: number, width: number, height: number }} インク領域の矩形
- */
-function markerInkBox(marker: MarkerAnnotation) {
-  const half = marker.strokeWidth / 2;
-  const minX = Math.min(marker.x1, marker.x2);
-  const minY = Math.min(marker.y1, marker.y2);
-  const maxX = Math.max(marker.x1, marker.x2);
-  const maxY = Math.max(marker.y1, marker.y2);
-  return {
-    x: minX - half,
-    y: minY - half,
-    width: Math.max(marker.strokeWidth, maxX - minX + marker.strokeWidth),
-    height: Math.max(marker.strokeWidth, maxY - minY + marker.strokeWidth),
-  };
-}
-
-/**
- * 選択クローム用の余白付き矩形を求める。
- * @param marker 対象のマーカー注釈
- * @returns {{ x: number, y: number, width: number, height: number }} クローム矩形
- */
-function markerChromeBox(marker: MarkerAnnotation) {
-  const ink = markerInkBox(marker);
-  return {
-    x: ink.x - CHROME_PAD,
-    y: ink.y - CHROME_PAD,
-    width: ink.width + CHROME_PAD * 2,
-    height: ink.height + CHROME_PAD * 2,
-  };
-}
-
-/**
- * クローム矩形の変更をマーカー端点・線幅のパッチへ変換する。
- * @param box 余白込みのクローム矩形
- * @param angle マーカーの向き（ラジアン）
- * @param moreHorizontal 水平寄りのマーカーかどうか
- * @returns {MarkerPatch} マーカー更新パッチ
- */
-function chromeBoxToMarkerPatch(
-  box: { x: number; y: number; width: number; height: number },
-  angle: number,
-  moreHorizontal: boolean,
-): MarkerPatch {
-  const inkW = Math.max(MIN_STROKE, box.width - CHROME_PAD * 2);
-  const inkH = Math.max(MIN_STROKE, box.height - CHROME_PAD * 2);
-  const cx = box.x + CHROME_PAD + inkW / 2;
-  const cy = box.y + CHROME_PAD + inkH / 2;
-
-  let stroke: number;
-  let length: number;
-  if (moreHorizontal) {
-    stroke = clamp(inkH, MIN_STROKE, MAX_STROKE);
-    length = Math.max(MIN_LENGTH, inkW - stroke);
-  } else {
-    stroke = clamp(inkW, MIN_STROKE, MAX_STROKE);
-    length = Math.max(MIN_LENGTH, inkH - stroke);
-  }
-
-  const half = length / 2;
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  return {
-    x1: Math.round(cx - cos * half),
-    y1: Math.round(cy - sin * half),
-    x2: Math.round(cx + cos * half),
-    y2: Math.round(cy + sin * half),
-    strokeWidth: Math.round(stroke),
-  };
-}
-
-/**
- * マーカーの選択枠・回転・リサイズ。注釈本体より前面に重ねる。
+ * マーカーの選択枠・回転・リサイズ。線の角度に合わせて枠ごと回す。
  * @param props 対象マーカーと変更コールバック
  * @returns {JSX.Element} 選択クローム UI
  */
 export function MarkerSelectionChrome({ marker, onChange }: Props) {
   const dragRef = useRef<DragState | null>(null);
-  const chrome = markerChromeBox(marker);
-  const cx = (marker.x1 + marker.x2) / 2;
-  const cy = (marker.y1 + marker.y2) / 2;
-  const angle = Math.atan2(marker.y2 - marker.y1, marker.x2 - marker.x1);
-  const moreHorizontal = Math.abs(Math.cos(angle)) >= Math.abs(Math.sin(angle));
+  const length = Math.max(1, markerLength(marker));
+  const angle = markerAngleDegrees(marker);
+  const centerX = (marker.x1 + marker.x2) / 2;
+  const centerY = (marker.y1 + marker.y2) / 2;
+  const boxWidth = length;
+  const boxHeight = marker.strokeWidth;
 
   const onResizePointerDown = (handle: ResizeHandle) => (event: PointerEvent<HTMLSpanElement>) => {
     event.stopPropagation();
@@ -174,12 +100,11 @@ export function MarkerSelectionChrome({ marker, onChange }: Props) {
       handle,
       startX: event.clientX,
       startY: event.clientY,
-      originX: chrome.x,
-      originY: chrome.y,
-      originWidth: chrome.width,
-      originHeight: chrome.height,
+      centerX,
+      centerY,
+      length,
+      stroke: marker.strokeWidth,
       angle,
-      moreHorizontal,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -187,13 +112,14 @@ export function MarkerSelectionChrome({ marker, onChange }: Props) {
   const onRotatePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    const pointerAngle = (Math.atan2(event.clientY - cy, event.clientX - cx) * 180) / Math.PI;
+    const pointerAngle = (Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180) / Math.PI;
     dragRef.current = {
       kind: "rotate",
       pointerId: event.pointerId,
-      centerX: cx,
-      centerY: cy,
+      centerX,
+      centerY,
       startAngle: pointerAngle,
+      originAngle: angle,
       origin: { ...marker },
     };
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -208,32 +134,60 @@ export function MarkerSelectionChrome({ marker, onChange }: Props) {
 
     if (drag.kind === "rotate") {
       const pointerAngle = (Math.atan2(event.clientY - drag.centerY, event.clientX - drag.centerX) * 180) / Math.PI;
-      const delta = snapRotation(pointerAngle - drag.startAngle, event.shiftKey);
-      onChange(rotateMarkerEndpoints(drag.origin, normalizeDegrees(delta)));
+      const next = drag.originAngle + (pointerAngle - drag.startAngle);
+      onChange(placeMarkerAtAngle(drag.origin, snapRotation(next, event.shiftKey)));
       return;
     }
 
-    const minWidth = drag.moreHorizontal
-      ? CHROME_PAD * 2 + MIN_STROKE + MIN_LENGTH
-      : CHROME_PAD * 2 + MIN_STROKE;
-    const minHeight = drag.moreHorizontal
-      ? CHROME_PAD * 2 + MIN_STROKE
-      : CHROME_PAD * 2 + MIN_STROKE + MIN_LENGTH;
+    const local = screenDeltaToLocal(event.clientX - drag.startX, event.clientY - drag.startY, drag.angle);
+    const handle = drag.handle;
+    let lengthDelta = 0;
+    let strokeDelta = 0;
+    if (handle.includes("e")) {
+      lengthDelta += local.x;
+    }
+    if (handle.includes("w")) {
+      lengthDelta -= local.x;
+    }
+    if (handle.includes("s")) {
+      strokeDelta += local.y;
+    }
+    if (handle.includes("n")) {
+      strokeDelta -= local.y;
+    }
 
-    const box = applyBoxResize({
-      handle: drag.handle,
-      origin: {
-        x: drag.originX,
-        y: drag.originY,
-        width: drag.originWidth,
-        height: drag.originHeight,
-      },
-      localDx: event.clientX - drag.startX,
-      localDy: event.clientY - drag.startY,
-      minWidth,
-      minHeight,
+    const nextLength = Math.max(MIN_LENGTH, drag.length + lengthDelta);
+    const nextStroke = clamp(drag.stroke + strokeDelta, MIN_STROKE, MAX_STROKE);
+    const appliedLength = nextLength - drag.length;
+    const appliedStroke = nextStroke - drag.stroke;
+    let localCx = 0;
+    let localCy = 0;
+    if (handle.includes("e")) {
+      localCx += appliedLength / 2;
+    }
+    if (handle.includes("w")) {
+      localCx -= appliedLength / 2;
+    }
+    if (handle.includes("s")) {
+      localCy += appliedStroke / 2;
+    }
+    if (handle.includes("n")) {
+      localCy -= appliedStroke / 2;
+    }
+
+    const radians = (drag.angle * Math.PI) / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const nextCenterX = drag.centerX + localCx * cos - localCy * sin;
+    const nextCenterY = drag.centerY + localCx * sin + localCy * cos;
+    const half = nextLength / 2;
+    onChange({
+      x1: Math.round(nextCenterX - cos * half),
+      y1: Math.round(nextCenterY - sin * half),
+      x2: Math.round(nextCenterX + cos * half),
+      y2: Math.round(nextCenterY + sin * half),
+      strokeWidth: Math.round(nextStroke),
     });
-    onChange(chromeBoxToMarkerPatch(box, drag.angle, drag.moreHorizontal));
   };
 
   const onPointerUp = (event: PointerEvent<HTMLElement>) => {
@@ -243,25 +197,25 @@ export function MarkerSelectionChrome({ marker, onChange }: Props) {
   };
 
   return (
-    <div className="pointer-events-none absolute inset-0" style={{ zIndex: SELECTION_CHROME_Z }}>
-      <div
-        className="pointer-events-none absolute outline outline-2 outline-[var(--brand)]"
-        style={{
-          left: chrome.x,
-          top: chrome.y,
-          width: chrome.width,
-          height: chrome.height,
-        }}
-      />
+    <div
+      className="pointer-events-none absolute"
+      style={{
+        left: centerX - boxWidth / 2,
+        top: centerY - boxHeight / 2,
+        width: boxWidth,
+        height: boxHeight,
+        zIndex: SELECTION_CHROME_Z,
+        transform: `rotate(${angle}deg)`,
+        transformOrigin: "center center",
+      }}
+    >
+      <div className="pointer-events-none absolute inset-0 outline outline-2 outline-[var(--brand)] outline-offset-2" />
+      <div className="pointer-events-none absolute top-0 left-1/2 h-6 w-px -translate-x-1/2 -translate-y-full bg-[var(--brand)]" />
       <button
         type="button"
         aria-label="回転"
         title="ドラッグで回転（Shift で 15° 刻み）"
-        className="pointer-events-auto absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center justify-center rounded-full border-2 border-white bg-[var(--brand)] text-[var(--brand-foreground)] shadow-md active:cursor-grabbing"
-        style={{
-          left: chrome.x + chrome.width / 2,
-          top: chrome.y - 18,
-        }}
+        className="pointer-events-auto absolute top-0 left-1/2 flex size-7 -translate-x-1/2 -translate-y-[calc(100%+10px)] cursor-grab items-center justify-center rounded-full border-2 border-white bg-[var(--brand)] text-[var(--brand-foreground)] shadow-md active:cursor-grabbing"
         onPointerDown={onRotatePointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -269,31 +223,21 @@ export function MarkerSelectionChrome({ marker, onChange }: Props) {
       >
         <RotateCw className="size-3.5" />
       </button>
-      <div
-        className="absolute"
-        style={{
-          left: chrome.x,
-          top: chrome.y,
-          width: chrome.width,
-          height: chrome.height,
-        }}
-      >
-        {BOX_RESIZE_HANDLES.map((handle) => (
-          <span
-            key={handle.id}
-            aria-label={`リサイズ ${handle.id}`}
-            title="ドラッグで長さ・太さを変更"
-            className={cn(
-              "pointer-events-auto absolute size-3 rounded-sm border-2 border-white bg-[var(--brand)]",
-              handle.className,
-            )}
-            onPointerDown={onResizePointerDown(handle.id)}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-          />
-        ))}
-      </div>
+      {BOX_RESIZE_HANDLES.map((handle) => (
+        <span
+          key={handle.id}
+          aria-label={`リサイズ ${handle.id}`}
+          title="ドラッグで長さ・太さを変更"
+          className={cn(
+            "pointer-events-auto absolute size-3 rounded-sm border-2 border-white bg-[var(--brand)]",
+            handle.className,
+          )}
+          onPointerDown={onResizePointerDown(handle.id)}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        />
+      ))}
     </div>
   );
 }

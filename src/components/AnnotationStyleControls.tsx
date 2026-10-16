@@ -20,8 +20,8 @@ export function AnnotationStyleControls({ style, onChange, label = "注釈" }: P
   const customColor = !isPresetColor(style.color, ANNOTATION_COLORS);
 
   return (
-    <div className="flex items-center gap-3" onPointerDown={(event) => event.stopPropagation()}>
-      <div className="flex items-center gap-1.5" role="group" aria-label={`${label}の色`}>
+    <div className="flex items-center gap-3 landscape:flex-col" onPointerDown={(event) => event.stopPropagation()}>
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label={`${label}の色`}>
         <StyleFieldLabel>{label}</StyleFieldLabel>
         {ANNOTATION_COLORS.map((color) => {
           const selected = style.color.toLowerCase() === color.toLowerCase();
@@ -51,9 +51,9 @@ export function AnnotationStyleControls({ style, onChange, label = "注釈" }: P
         />
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
+      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
 
-      <div className="flex items-center gap-1.5" role="group" aria-label={`${label}の太さ`}>
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label={`${label}の太さ`}>
         <StyleFieldLabel>太さ</StyleFieldLabel>
         {ANNOTATION_STROKE_WIDTHS.map((width) => {
           const selected = style.strokeWidth === width;

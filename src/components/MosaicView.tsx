@@ -9,6 +9,8 @@ type Props = {
   mosaic: MosaicAnnotation;
   layers: ImageLayer[];
   selected?: boolean;
+  /** ドラッグ中など、範囲の縁を白枠で示す。 */
+  outline?: boolean;
   interactive: boolean;
   onSelect: () => void;
   onChange: (patch: MosaicPatch) => void;
@@ -29,7 +31,15 @@ type DragState = {
  * @param props モザイクデータと操作コールバック
  * @returns {JSX.Element} モザイク表示
  */
-export function MosaicView({ mosaic, layers, selected = false, interactive, onSelect, onChange }: Props) {
+export function MosaicView({
+  mosaic,
+  layers,
+  selected = false,
+  outline = false,
+  interactive,
+  onSelect,
+  onChange,
+}: Props) {
   const dragRef = useRef<DragState | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -42,11 +52,20 @@ export function MosaicView({ mosaic, layers, selected = false, interactive, onSe
       return;
     }
     const token = ++paintTokenRef.current;
-    void renderMosaicPreview(canvas, mosaic, layers).then(() => {
-      if (token !== paintTokenRef.current) {
-        return;
-      }
+    const frame = requestAnimationFrame(() => {
+      void renderMosaicPreview(mosaic, layers).then((painted) => {
+        const target = canvasRef.current;
+        if (!target || token !== paintTokenRef.current) {
+          return;
+        }
+        target.width = painted.width;
+        target.height = painted.height;
+        target.getContext("2d")?.drawImage(painted, 0, 0);
+      });
     });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
   }, [mosaic, layers]);
 
   useEffect(() => {
@@ -116,6 +135,9 @@ export function MosaicView({ mosaic, layers, selected = false, interactive, onSe
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <canvas ref={canvasRef} className="block size-full" />
       </div>
+      {outline && (
+        <div className="pointer-events-none absolute inset-0 box-border border-2 border-white shadow-[0_0_0_1px_rgb(0_0_0_/_35%)]" />
+      )}
     </div>
   );
 }
