@@ -1,6 +1,27 @@
 import type { ImageLayer, MosaicAnnotation } from "./types";
 import { loadHtmlImage } from "./images";
 
+/** プレビュー用に読み込み済みの画像。ドラッグ中の再読み込みを避ける。 */
+const previewImageCache = new Map<string, Promise<HTMLImageElement>>();
+
+/**
+ * プレビュー用の画像をキャッシュから返す。
+ * @param src 画像 URL
+ * @returns {Promise<HTMLImageElement>} 読み込み済みの画像
+ */
+function loadPreviewImage(src: string): Promise<HTMLImageElement> {
+  const cached = previewImageCache.get(src);
+  if (cached) {
+    return cached;
+  }
+  const pending = loadHtmlImage(src).catch((error: unknown) => {
+    previewImageCache.delete(src);
+    throw error;
+  });
+  previewImageCache.set(src, pending);
+  return pending;
+}
+
 /** モザイクの外接矩形。 */
 export type Bounds = {
   minX: number;
@@ -131,25 +152,24 @@ export function drawMosaicOnCanvas(
 
 /**
  * 画面プレビュー用に、レイヤーをモザイク矩形内へ合成してピクセル化する。
- * @param canvas 描画先
+ * 表示中のキャンバスは書き換えない。呼び出し側が最新結果だけを貼る。
  * @param mosaic モザイク範囲
  * @param layers 下にある画像
- * @returns {Promise<void>}
+ * @returns {Promise<HTMLCanvasElement>} ピクセル化済みのキャンバス
  */
 export async function renderMosaicPreview(
-  canvas: HTMLCanvasElement,
   mosaic: MosaicAnnotation,
   layers: ImageLayer[],
-): Promise<void> {
+): Promise<HTMLCanvasElement> {
   const width = Math.max(1, Math.round(mosaic.width));
   const height = Math.max(1, Math.round(mosaic.height));
+  const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
-    return;
+    return canvas;
   }
-  ctx.clearRect(0, 0, width, height);
 
   const cx = mosaic.x + mosaic.width / 2;
   const cy = mosaic.y + mosaic.height / 2;
@@ -160,7 +180,7 @@ export async function renderMosaicPreview(
 
   for (const layer of layers) {
     try {
-      const image = await loadHtmlImage(layer.src);
+      const image = await loadPreviewImage(layer.src);
       const layerCx = layer.x + layer.width / 2;
       const layerCy = layer.y + layer.height / 2;
       ctx.save();
@@ -174,4 +194,5 @@ export async function renderMosaicPreview(
   }
   ctx.restore();
   pixelateCanvas(canvas, mosaic.blockSize);
+  return canvas;
 }

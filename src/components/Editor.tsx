@@ -1591,7 +1591,8 @@ export function Editor() {
                 rotation: 0,
                 blockSize: mosaicStyle.blockSize,
               }}
-              layers={[]}
+              layers={layers}
+              outline
               interactive={false}
               onSelect={() => undefined}
               onChange={() => undefined}
