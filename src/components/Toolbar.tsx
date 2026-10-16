@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Check,
   Copy,
@@ -77,6 +77,8 @@ function ToolbarButton({
   onClick: () => void;
   label: string;
 }) {
+  const tooltipSide = useLandscape() ? "left" : "top";
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -97,9 +99,29 @@ function ToolbarButton({
           {children}
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top">{label}</TooltipContent>
+      <TooltipContent side={tooltipSide}>{label}</TooltipContent>
     </Tooltip>
   );
+}
+
+/**
+ * 横長ウィンドウかどうか。ツールバーを右の縦並びに切り替える。
+ * @returns {boolean} 横幅が縦より長いとき true
+ */
+function useLandscape(): boolean {
+  const query = "(orientation: landscape)";
+  const [landscape, setLandscape] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(query).matches : false,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const onChange = () => setLandscape(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return landscape;
 }
 
 /** 無効時の枠・背景・文字色クラス。 */
@@ -201,9 +223,10 @@ export function Toolbar({
   return (
     <TooltipProvider>
       <div
-        className="fixed bottom-6 left-1/2 z-[10001] flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 flex-col items-center gap-2"
+        className="fixed z-[10001] overscroll-contain portrait:bottom-6 portrait:left-1/2 portrait:w-[calc(100vw-3rem)] portrait:max-w-max portrait:-translate-x-1/2 portrait:overflow-x-auto portrait:overflow-y-hidden landscape:top-1/2 landscape:right-6 landscape:h-[calc(100vh-3rem)] landscape:max-h-max landscape:-translate-y-1/2 landscape:overflow-x-hidden landscape:overflow-y-auto"
         onPointerDown={(event) => event.stopPropagation()}
       >
+      <div className="flex w-max flex-col items-center gap-2 landscape:flex-row landscape:items-start">
         {showStrokeStyle && !cropping && (
           <div className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 shadow-lg">
             <AnnotationStyleControls
@@ -238,7 +261,7 @@ export function Toolbar({
           </div>
         )}
 
-        <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-[var(--border)] bg-white px-2.5 py-2 text-foreground shadow-lg">
+        <div className="flex w-max shrink-0 items-center gap-1.5 rounded-xl border border-[var(--border)] bg-white px-2.5 py-2 text-foreground shadow-lg landscape:flex-col-reverse">
           {cropping ? (
             <>
             <ToolbarButton className={addButtonClass} label="トリミング適用" onClick={onApplyCrop}>
@@ -253,7 +276,7 @@ export function Toolbar({
               <ToolbarButton className={addButtonClass} label="画像を追加" onClick={onAdd}>
                 <ImagePlus />
               </ToolbarButton>
-              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)]" />
+              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)] landscape:mx-0 landscape:my-0.5 landscape:h-px landscape:w-6" />
               <ToolbarButton
                 className={toolsButtonClass(tool === "arrow")}
                 label="矢印"
@@ -296,7 +319,7 @@ export function Toolbar({
               >
                 <Highlighter />
               </ToolbarButton>
-              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)]" />
+              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)] landscape:mx-0 landscape:my-0.5 landscape:h-px landscape:w-6" />
               <ToolbarButton className={historyButtonClass} label="元に戻す" disabled={!canUndo} onClick={onUndo}>
                 <Undo2 />
               </ToolbarButton>
@@ -306,7 +329,7 @@ export function Toolbar({
               <ToolbarButton className={historyButtonClass} label="リセット" disabled={!canReset} onClick={onReset}>
                 <RotateCcw />
               </ToolbarButton>
-              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)]" />
+              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)] landscape:mx-0 landscape:my-0.5 landscape:h-px landscape:w-6" />
               <ToolbarButton
                 className={exportButtonClass}
                 label="ダウンロード"
@@ -326,6 +349,7 @@ export function Toolbar({
             </>
           )}
         </div>
+      </div>
       </div>
     </TooltipProvider>
   );

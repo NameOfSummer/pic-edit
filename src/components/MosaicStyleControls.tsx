@@ -16,7 +16,7 @@ type Props = {
 export function MosaicStyleControls({ style, onChange }: Props) {
   return (
     <div
-      className="flex items-center gap-1.5"
+      className="flex items-center gap-1.5 landscape:flex-col"
       onPointerDown={(event) => event.stopPropagation()}
       role="group"
       aria-label="モザイクの粗さ"

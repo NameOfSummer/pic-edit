@@ -37,8 +37,8 @@ export function TextStyleControls({ style, onChange }: Props) {
     !backgroundTransparent && !isPresetColor(style.backgroundColor, BACKGROUND_PRESETS);
 
   return (
-    <div className="flex flex-wrap items-center gap-3" onPointerDown={(event) => event.stopPropagation()}>
-      <div className="flex items-center gap-1.5" role="group" aria-label="文字色">
+    <div className="flex items-center gap-3 landscape:flex-col" onPointerDown={(event) => event.stopPropagation()}>
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="文字色">
         <StyleFieldLabel>文字</StyleFieldLabel>
         {ANNOTATION_COLORS.map((color) => {
           const selected = style.color.toLowerCase() === color.toLowerCase();
@@ -68,9 +68,9 @@ export function TextStyleControls({ style, onChange }: Props) {
         />
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
+      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
 
-      <div className="flex items-center gap-1.5" role="group" aria-label="背景色">
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="背景色">
         <StyleFieldLabel>背景</StyleFieldLabel>
         <button
           type="button"
@@ -114,9 +114,9 @@ export function TextStyleControls({ style, onChange }: Props) {
         />
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
+      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
 
-      <div className="flex items-center gap-1.5" role="group" aria-label="フォントサイズ">
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="フォントサイズ">
         <StyleFieldLabel>サイズ</StyleFieldLabel>
         {TEXT_FONT_SIZES.map((size) => {
           const selected = style.fontSize === size;
@@ -140,9 +140,9 @@ export function TextStyleControls({ style, onChange }: Props) {
         })}
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
+      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
 
-      <div className="flex items-center gap-1.5" role="group" aria-label="文字の太さ">
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="文字の太さ">
         <StyleFieldLabel>太さ</StyleFieldLabel>
         <button
           type="button"

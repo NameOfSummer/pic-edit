@@ -19,8 +19,8 @@ export function CounterStyleControls({ style, onChange }: Props) {
   const customColor = !isPresetColor(style.color, ANNOTATION_COLORS);
 
   return (
-    <div className="flex flex-wrap items-center gap-3" onPointerDown={(event) => event.stopPropagation()}>
-      <div className="flex items-center gap-1.5" role="group" aria-label="カウンターの色">
+    <div className="flex items-center gap-3 landscape:flex-col" onPointerDown={(event) => event.stopPropagation()}>
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="カウンターの色">
         <StyleFieldLabel>色</StyleFieldLabel>
         {ANNOTATION_COLORS.map((color) => {
           const selected = style.color.toLowerCase() === color.toLowerCase();
@@ -50,9 +50,9 @@ export function CounterStyleControls({ style, onChange }: Props) {
         />
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)]" />
+      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
 
-      <div className="flex items-center gap-1.5" role="group" aria-label="カウンターのサイズ">
+      <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="カウンターのサイズ">
         <StyleFieldLabel>サイズ</StyleFieldLabel>
         {COUNTER_SIZES.map((size) => {
           const selected = style.size === size;
