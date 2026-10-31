@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
  */
 export function StyleFieldLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="shrink-0 text-[10px] leading-none font-medium tracking-wide text-muted-foreground">
+    <span className="shrink-0 text-[10px] leading-none font-medium text-muted-foreground">
       {children}
     </span>
   );

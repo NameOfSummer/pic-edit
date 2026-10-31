@@ -1,6 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/*
+ * UI フォント（DESIGN.md: 本文 Noto Sans JP / 見出し Roboto）。fontsource で自前ホストする。
+ * Noto Sans JP は unicode-range 宣言が 1 ウェイト約 110KB と重いため 400 / 700 のみ読み込む（500 は 400 で表示）。
+ */
+@import "@fontsource/noto-sans-jp/400.css";
+@import "@fontsource/noto-sans-jp/700.css";
+@import "@fontsource/roboto/400.css";
+@import "@fontsource/roboto/500.css";
+@import "@fontsource/roboto/700.css";
+
+/* LINE Seed JP はテキスト・カウンター注釈（TEXT_FONT_FAMILY）と PNG 書き出しで使う */
+
 @font-face {
   font-family: "LINE Seed JP";
   src: url("./assets/fonts/LINESeedJP_OTF_Th.woff2") format("woff2");
@@ -36,8 +48,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "LINE Seed JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-  --font-mono: "LINE Seed JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  --font-sans: "Noto Sans JP", "Helvetica Neue", arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  --font-heading: Roboto, "Noto Sans JP", "Helvetica Neue", arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  --font-mono: Roboto, "Noto Sans JP", "Helvetica Neue", arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -65,39 +78,43 @@
   --color-ink: var(--ink);
   --color-ink-foreground: var(--ink-foreground);
   --color-surface: var(--surface);
+  /* ニューモーフィック影（DESIGN.md の Level 1 / Level 2 をツール UI 向けに縮小） */
+  --shadow-neu-panel: rgba(0, 0, 0, 0.21) 9px 8px 10px 0, #ffffff 0 0 5px 0, #ffffff -4px 0 5px 0, #ffffff -4px -6px 15px 0;
+  --shadow-neu-raised: #ffffff -2px -2px 4px 0, rgba(0, 0, 0, 0.16) 3px 3px 6px 0;
+  --shadow-neu-raised-hover: #ffffff -3px -3px 6px 0, rgba(0, 0, 0, 0.18) 5px 5px 10px 0;
+  --shadow-neu-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.16), inset -3px -3px 6px #ffffff;
+  --shadow-neu-inset-sm: inset 2px 2px 4px rgba(0, 0, 0, 0.18), inset -2px -2px 4px #ffffff;
 }
 
 :root {
-  /* Citrus Grove: #EE964B / #F4D35E / #FFF2D9 / #A7D6C6 / #90BE6D + 白黒 */
+  /* DESIGN.md（ニューモーフィズム）: ベース #f3f5f7 + 黒テキスト + カテゴリアクセント */
   --radius: 0.625rem;
-  --brand: #ee964b;
-  --brand-foreground: #111111;
-  --ink: #111111;
+  --brand: #009be0;
+  --brand-foreground: #ffffff;
+  --ink: #000000;
   --ink-foreground: #ffffff;
-  --surface: #fff2d9;
-  --background: #ffffff;
-  --foreground: #111111;
-  --card: #ffffff;
-  --card-foreground: #111111;
-  --popover: #ffffff;
-  --popover-foreground: #111111;
-  --primary: #ee964b;
-  --primary-foreground: #111111;
-  --secondary: #fff2d9;
-  --secondary-foreground: #111111;
-  --muted: #fff2d9;
-  --muted-foreground: #5c5346;
-  --accent: #f4d35e;
-  --accent-foreground: #111111;
-  --destructive: #b45309;
-  --border: #e5d5b8;
-  --input: #e5d5b8;
-  --ring: #ee964b;
-  --accent-add: #ee964b;
-  --accent-tools: #90be6d;
-  --accent-history: #a7d6c6;
-  --accent-export: #f4d35e;
-  --button-disabled: #cbcbcb;
+  --surface: #e9ecef;
+  --background: #f3f5f7;
+  --foreground: #000000;
+  --card: #f3f5f7;
+  --card-foreground: #000000;
+  --popover: #f3f5f7;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #e9ecef;
+  --secondary-foreground: #000000;
+  --muted: #e9ecef;
+  --muted-foreground: #6b7178;
+  --accent: #e9ecef;
+  --accent-foreground: #000000;
+  --destructive: #d83f30;
+  --border: #dde1e6;
+  --input: #dde1e6;
+  --ring: #009be0;
+  /* 選択中のツール・オプションのアイコン色（Green） */
+  --neu-active: #189f3b;
+  --neu-disabled: #b9bfc6;
 }
 
 .dark {
@@ -146,10 +163,10 @@
   .checkerboard {
     background-color: #ffffff;
     background-image:
-      linear-gradient(45deg, #fff2d9 25%, transparent 25%),
-      linear-gradient(-45deg, #fff2d9 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #fff2d9 75%),
-      linear-gradient(-45deg, transparent 75%, #fff2d9 75%);
+      linear-gradient(45deg, #e9ecef 25%, transparent 25%),
+      linear-gradient(-45deg, #e9ecef 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e9ecef 75%),
+      linear-gradient(-45deg, transparent 75%, #e9ecef 75%);
     background-size: 16px 16px;
     background-position:
       0 0,
@@ -157,4 +174,72 @@
       8px -8px,
       -8px 0;
   }
+}
+
+/* ツールバー・スタイルパネルの凸型パネル */
+@utility neu-panel {
+  border-radius: 26px;
+  background-color: var(--background);
+  box-shadow: var(--shadow-neu-panel);
+}
+
+/* 凸型ボタン。押下中は凹み、aria-pressed="true"（選択中）は凹型 + アクセント色 */
+@utility neu-button {
+  border-radius: 12px;
+  background-color: var(--background);
+  color: var(--foreground);
+  box-shadow: var(--shadow-neu-raised);
+  outline: none;
+  transition-property: box-shadow, color, transform;
+  transition-duration: 150ms;
+
+  &:hover:enabled {
+    box-shadow: var(--shadow-neu-raised-hover);
+  }
+
+  &:active:enabled {
+    box-shadow: var(--shadow-neu-inset-sm);
+    transform: scale(0.97);
+  }
+
+  &[aria-pressed="true"] {
+    box-shadow: var(--shadow-neu-inset);
+    color: var(--neu-active);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    box-shadow: none;
+    color: var(--neu-disabled);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* 色見本（丸）。選択中（aria-pressed / data-active）は背景色の隙間 + 黒リングで示す */
+@utility neu-swatch {
+  border-radius: calc(infinity * 1px);
+  box-shadow: var(--shadow-neu-raised);
+  transition-property: box-shadow, transform;
+  transition-duration: 100ms;
+
+  &:active:enabled {
+    transform: scale(0.9);
+  }
+
+  &[aria-pressed="true"],
+  &[data-active="true"] {
+    box-shadow: 0 0 0 3px var(--background), 0 0 0 5px var(--foreground);
+    transform: scale(1.05);
+  }
+}
+
+/* パネル内の区切り線（凹んだ溝に見せる） */
+@utility neu-divider {
+  flex-shrink: 0;
+  background-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 1px 1px 0 #ffffff;
 }

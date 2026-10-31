@@ -3,7 +3,6 @@ import { Popover } from "radix-ui";
 import { ColorPickerPanel } from "@/components/ColorPickerPanel";
 import { useEyedropper } from "@/editor/EyedropperContext";
 import { toHexColor } from "@/lib/color";
-import { cn } from "@/lib/utils";
 
 /** カラーピッカーボタンのプロパティ。 */
 type Props = {
@@ -36,10 +35,8 @@ export function ColorPickerButton({
           type="button"
           title={label}
           aria-label={label}
-          className={cn(
-            "relative size-6 shrink-0 overflow-hidden rounded-full border-2 transition-transform duration-100 enabled:active:scale-90",
-            active ? "scale-110 border-black" : "border-[var(--border)] hover:border-black",
-          )}
+          data-active={active}
+          className="neu-swatch relative size-[22px] shrink-0 overflow-hidden"
           onPointerDown={(event) => event.stopPropagation()}
         >
           <span
