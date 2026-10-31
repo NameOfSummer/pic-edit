@@ -1387,8 +1387,8 @@ export function Editor() {
             counters.length === 0 &&
             mosaics.length === 0 &&
             markers.length === 0 && (
-            <div className="pointer-events-none absolute top-1/2 left-1/2 z-[1] w-[min(90vw,22rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border/70 bg-background/75 px-7 py-5 text-center shadow-lg backdrop-blur-md">
-              <p className="m-0 mb-1.5 text-lg font-semibold">画像を配置</p>
+            <div className="pointer-events-none absolute top-1/2 left-1/2 z-[1] w-[min(90vw,28rem)] -translate-x-1/2 -translate-y-1/2 rounded-[30px] bg-background px-9 py-6 text-center shadow-neu-panel">
+              <p className="m-0 mb-1.5 font-heading text-xl font-bold">画像を配置</p>
               <p className="m-0 text-sm text-muted-foreground">
                 ドラッグ＆ドロップ、右クリックの貼り付け、または{" "}
                 <KbdGroup>

@@ -1,6 +1,5 @@
 import { StyleFieldLabel } from "@/components/StyleFieldLabel";
 import { MOSAIC_BLOCK_SIZES, type MosaicStyle } from "@/editor/types";
-import { cn } from "@/lib/utils";
 
 /** モザイク粗さコントロールのプロパティ。 */
 type Props = {
@@ -30,12 +29,7 @@ export function MosaicStyleControls({ style, onChange }: Props) {
             type="button"
             title={`${size}px`}
             aria-pressed={selected}
-            className={cn(
-              "flex h-8 w-9 items-center justify-center rounded-md border-2 transition-[background-color,border-color,transform] duration-100 enabled:active:scale-95",
-              selected
-                ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                : "border-[var(--border)] bg-white text-black hover:border-[var(--brand)]",
-            )}
+            className="neu-button flex h-8 w-9 items-center justify-center"
             onClick={() => onChange({ blockSize: size })}
           >
             <span
@@ -46,7 +40,7 @@ export function MosaicStyleControls({ style, onChange }: Props) {
                 <span
                   key={index}
                   className="block size-full rounded-[1px]"
-                  style={{ backgroundColor: selected ? "#ffffff" : "var(--brand)", opacity: 0.35 + index * 0.15 }}
+                  style={{ backgroundColor: "currentColor", opacity: 0.35 + index * 0.15 }}
                 />
               ))}
             </span>

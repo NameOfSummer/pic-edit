@@ -50,10 +50,9 @@ export function TextStyleControls({ style, onChange }: Props) {
               aria-label={`文字色 ${color}`}
               aria-pressed={selected}
               className={cn(
-                "size-6 rounded-full border-2 transition-transform duration-100 enabled:active:scale-90",
-                selected ? "border-black scale-110" : "border-[var(--border)] hover:border-black",
+                "neu-swatch size-[22px]",
                 (color.toLowerCase() === "#ffffff" || color.toLowerCase() === "#fff100") &&
-                  "shadow-[inset_0_0_0_1px_var(--border)]",
+                  "outline -outline-offset-1 outline-black/15",
               )}
               style={{ backgroundColor: color }}
               onClick={() => onChange({ color })}
@@ -68,7 +67,7 @@ export function TextStyleControls({ style, onChange }: Props) {
         />
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
+      <div className="neu-divider h-6 w-px landscape:h-px landscape:w-6" />
 
       <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="背景色">
         <StyleFieldLabel>背景</StyleFieldLabel>
@@ -77,10 +76,7 @@ export function TextStyleControls({ style, onChange }: Props) {
           title="透明"
           aria-label="背景なし（透明）"
           aria-pressed={backgroundTransparent}
-          className={cn(
-            "relative size-6 overflow-hidden rounded-full border-2 transition-transform duration-100 enabled:active:scale-90",
-            backgroundTransparent ? "border-black scale-110" : "border-[var(--border)] hover:border-black",
-          )}
+          className="neu-swatch relative size-[22px] overflow-hidden outline -outline-offset-1 outline-black/15"
           onClick={() => onChange({ backgroundColor: "transparent" })}
         >
           <span className="absolute inset-0 bg-white" />
@@ -97,9 +93,8 @@ export function TextStyleControls({ style, onChange }: Props) {
               aria-label={`背景色 ${label}`}
               aria-pressed={selected}
               className={cn(
-                "size-6 rounded-full border-2 transition-transform duration-100 enabled:active:scale-90",
-                selected ? "border-black scale-110" : "border-[var(--border)] hover:border-black",
-                color.toLowerCase() === "#ffffff" && "shadow-[inset_0_0_0_1px_var(--border)]",
+                "neu-swatch size-[22px]",
+                color.toLowerCase() === "#ffffff" && "outline -outline-offset-1 outline-black/15",
               )}
               style={{ backgroundColor: color }}
               onClick={() => onChange({ backgroundColor: color })}
@@ -114,7 +109,7 @@ export function TextStyleControls({ style, onChange }: Props) {
         />
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
+      <div className="neu-divider h-6 w-px landscape:h-px landscape:w-6" />
 
       <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="フォントサイズ">
         <StyleFieldLabel>サイズ</StyleFieldLabel>
@@ -126,12 +121,7 @@ export function TextStyleControls({ style, onChange }: Props) {
               type="button"
               title={`${size}px`}
               aria-pressed={selected}
-              className={cn(
-                "h-8 min-w-9 rounded-md border-2 px-2 text-xs font-medium transition-[background-color,border-color,transform] duration-100 enabled:active:scale-95",
-                selected
-                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                  : "border-[var(--border)] bg-white text-black hover:border-[var(--brand)]",
-              )}
+              className="neu-button h-8 min-w-9 px-2 text-xs font-medium"
               onClick={() => onChange({ fontSize: size })}
             >
               {size}
@@ -140,19 +130,14 @@ export function TextStyleControls({ style, onChange }: Props) {
         })}
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
+      <div className="neu-divider h-6 w-px landscape:h-px landscape:w-6" />
 
       <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label="文字の太さ">
         <StyleFieldLabel>太さ</StyleFieldLabel>
         <button
           type="button"
           aria-pressed={style.fontWeight === "normal"}
-          className={cn(
-            "h-8 rounded-md border-2 px-3 text-sm transition-[background-color,border-color,transform] duration-100 enabled:active:scale-95",
-            style.fontWeight === "normal"
-              ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-              : "border-[var(--border)] bg-white text-black hover:border-[var(--brand)]",
-          )}
+          className="neu-button h-8 px-3 text-sm"
           onClick={() => onChange({ fontWeight: "normal" })}
         >
           標準
@@ -160,12 +145,7 @@ export function TextStyleControls({ style, onChange }: Props) {
         <button
           type="button"
           aria-pressed={style.fontWeight === "bold"}
-          className={cn(
-            "h-8 rounded-md border-2 px-3 text-sm font-bold transition-[background-color,border-color,transform] duration-100 enabled:active:scale-95",
-            style.fontWeight === "bold"
-              ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-              : "border-[var(--border)] bg-white text-black hover:border-[var(--brand)]",
-          )}
+          className="neu-button h-8 px-3 text-sm font-bold"
           onClick={() => onChange({ fontWeight: "bold" })}
         >
           太字

@@ -60,18 +60,18 @@ type Props = {
 };
 
 /**
- * ツールチップ付きのツールバー用アイコンボタン。
- * @param props 見た目・無効状態・クリックとラベル
+ * ツールチップ付きのツールバー用アイコンボタン（凸型、選択中は凹型）。
+ * @param props 選択状態・無効状態・クリックとラベル
  * @returns {JSX.Element} ツールバーボタン
  */
 function ToolbarButton({
-  className,
+  pressed,
   children,
   disabled,
   onClick,
   label,
 }: {
-  className: string;
+  pressed?: boolean;
   children: ReactNode;
   disabled?: boolean;
   onClick: () => void;
@@ -85,16 +85,10 @@ function ToolbarButton({
         <button
           type="button"
           aria-label={label}
+          aria-pressed={pressed}
           disabled={disabled}
           onClick={onClick}
-          className={[
-            "inline-flex size-8 shrink-0 items-center justify-center rounded-md border-2",
-            "outline-none transition-[background-color,color,border-color,transform] duration-150",
-            "enabled:active:scale-[0.96]",
-            "disabled:cursor-not-allowed",
-            "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-            className,
-          ].join(" ")}
+          className="neu-button inline-flex size-8.5 shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:size-[17px] [&_svg]:shrink-0"
         >
           {children}
         </button>
@@ -124,62 +118,11 @@ function useLandscape(): boolean {
   return landscape;
 }
 
-/** 無効時の枠・背景・文字色クラス。 */
-const disabledButtonClass =
-  "disabled:border-[var(--button-disabled)] disabled:bg-[var(--button-disabled)] disabled:text-white";
+/** スタイルパネル（ツールごとの色・太さなど）の外枠クラス。 */
+const stylePanelClass = "neu-panel px-3 py-2.5";
 
-/**
- * 基本: 背景・枠 = アクセント（4色のみ）/ アイコン = 黒
- * ホバー: 背景 = 黒 / 枠・アイコン = アクセント
- * ※クラス名は静的に書く（Tailwind が拾えるように）
- */
-const addButtonClass = [
-  "border-[var(--accent-add)] bg-[var(--accent-add)] text-black",
-  "hover:enabled:bg-black hover:enabled:border-[var(--accent-add)] hover:enabled:text-[var(--accent-add)]",
-  "active:enabled:opacity-90",
-  disabledButtonClass,
-].join(" ");
-
-/** 描画ツール群ボタンの共通クラス。 */
-const toolsButtonBaseClass = [
-  "border-[var(--accent-tools)] bg-[var(--accent-tools)] text-black",
-  "hover:enabled:bg-black hover:enabled:border-[var(--accent-tools)] hover:enabled:text-[var(--accent-tools)]",
-  "active:enabled:opacity-90",
-  disabledButtonClass,
-].join(" ");
-
-/**
- * 描画ツールボタンのクラスを選択状態に応じて組み立てる。
- * @param active そのツールが選択中かどうか
- * @returns {string} 適用する className
- */
-function toolsButtonClass(active: boolean): string {
-  return [toolsButtonBaseClass, active ? "ring-2 ring-black ring-offset-1" : ""].join(" ");
-}
-
-/** 履歴（元に戻す・やり直し・リセット）ボタンのクラス。 */
-const historyButtonClass = [
-  "border-[var(--accent-history)] bg-[var(--accent-history)] text-black",
-  "hover:enabled:bg-black hover:enabled:border-[var(--accent-history)] hover:enabled:text-[var(--accent-history)]",
-  "active:enabled:opacity-90",
-  disabledButtonClass,
-].join(" ");
-
-/** 書き出し（ダウンロード・コピー）ボタンのクラス。 */
-const exportButtonClass = [
-  "border-[var(--accent-export)] bg-[var(--accent-export)] text-black",
-  "hover:enabled:bg-black hover:enabled:border-[var(--accent-export)] hover:enabled:text-[var(--accent-export)]",
-  "active:enabled:opacity-90",
-  disabledButtonClass,
-].join(" ");
-
-/** クロップキャンセルボタンのクラス。 */
-const cancelButtonClass = [
-  "border-[var(--accent-add)] bg-[var(--accent-add)] text-black",
-  "hover:enabled:bg-black hover:enabled:border-[var(--accent-add)] hover:enabled:text-[var(--accent-add)]",
-  "active:enabled:opacity-90",
-  disabledButtonClass,
-].join(" ");
+/** ツールバーの区切り線クラス。 */
+const dividerClass = "neu-divider mx-1 h-6 w-px landscape:mx-0 landscape:my-1 landscape:h-px landscape:w-6";
 
 /**
  * エディタ上部のツールバー。ツール切替・スタイル・履歴・書き出しをまとめる。
@@ -223,12 +166,12 @@ export function Toolbar({
   return (
     <TooltipProvider>
       <div
-        className="fixed z-[10001] overscroll-contain portrait:bottom-6 portrait:left-1/2 portrait:w-[calc(100vw-3rem)] portrait:max-w-max portrait:-translate-x-1/2 portrait:overflow-x-auto portrait:overflow-y-hidden landscape:top-1/2 landscape:right-6 landscape:h-[calc(100vh-3rem)] landscape:max-h-max landscape:-translate-y-1/2 landscape:overflow-x-hidden landscape:overflow-y-auto"
+        className="fixed z-[10001] overscroll-contain portrait:bottom-2 portrait:left-1/2 portrait:w-[calc(100vw-1rem)] portrait:max-w-max portrait:-translate-x-1/2 portrait:overflow-x-auto portrait:overflow-y-hidden landscape:top-1/2 landscape:right-2 landscape:h-[calc(100vh-1rem)] landscape:max-h-max landscape:-translate-y-1/2 landscape:overflow-x-hidden landscape:overflow-y-auto"
         onPointerDown={(event) => event.stopPropagation()}
       >
-      <div className="flex w-max flex-col items-center gap-2 landscape:flex-row landscape:items-start">
+      <div className="flex w-max flex-col items-center gap-3.5 p-4 landscape:flex-row landscape:items-start">
         {showStrokeStyle && !cropping && (
-          <div className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 shadow-lg">
+          <div className={stylePanelClass}>
             <AnnotationStyleControls
               style={annotationStyle}
               onChange={onAnnotationStyleChange}
@@ -238,100 +181,100 @@ export function Toolbar({
         )}
 
         {showTextStyle && !cropping && (
-          <div className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 shadow-lg">
+          <div className={stylePanelClass}>
             <TextStyleControls style={textStyle} onChange={onTextStyleChange} />
           </div>
         )}
 
         {showCounterStyle && !cropping && (
-          <div className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 shadow-lg">
+          <div className={stylePanelClass}>
             <CounterStyleControls style={counterStyle} onChange={onCounterStyleChange} />
           </div>
         )}
 
         {showMosaicStyle && !cropping && (
-          <div className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 shadow-lg">
+          <div className={stylePanelClass}>
             <MosaicStyleControls style={mosaicStyle} onChange={onMosaicStyleChange} />
           </div>
         )}
 
         {showMarkerStyle && !cropping && (
-          <div className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 shadow-lg">
+          <div className={stylePanelClass}>
             <MarkerStyleControls style={markerStyle} onChange={onMarkerStyleChange} />
           </div>
         )}
 
-        <div className="flex w-max shrink-0 items-center gap-1.5 rounded-xl border border-[var(--border)] bg-white px-2.5 py-2 text-foreground shadow-lg landscape:flex-col-reverse">
+        <div className="neu-panel flex w-max shrink-0 items-center gap-1.5 p-2.5 text-foreground landscape:flex-col-reverse">
           {cropping ? (
             <>
-            <ToolbarButton className={addButtonClass} label="トリミング適用" onClick={onApplyCrop}>
+            <ToolbarButton label="トリミング適用" onClick={onApplyCrop}>
               <Check />
             </ToolbarButton>
-            <ToolbarButton className={cancelButtonClass} label="キャンセル" onClick={onCancelCrop}>
+            <ToolbarButton label="キャンセル" onClick={onCancelCrop}>
               <X />
             </ToolbarButton>
             </>
           ) : (
             <>
-              <ToolbarButton className={addButtonClass} label="画像を追加" onClick={onAdd}>
+              <ToolbarButton label="画像を追加" onClick={onAdd}>
                 <ImagePlus />
               </ToolbarButton>
-              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)] landscape:mx-0 landscape:my-0.5 landscape:h-px landscape:w-6" />
+              <div className={dividerClass} />
               <ToolbarButton
-                className={toolsButtonClass(tool === "arrow")}
+                pressed={tool === "arrow"}
                 label="矢印"
                 onClick={() => onToolChange(tool === "arrow" ? "select" : "arrow")}
               >
                 <MoveUpRight />
               </ToolbarButton>
               <ToolbarButton
-                className={toolsButtonClass(tool === "rect")}
+                pressed={tool === "rect"}
                 label="枠"
                 onClick={() => onToolChange(tool === "rect" ? "select" : "rect")}
               >
                 <Square />
               </ToolbarButton>
               <ToolbarButton
-                className={toolsButtonClass(tool === "text")}
+                pressed={tool === "text"}
                 label="テキスト"
                 onClick={() => onToolChange(tool === "text" ? "select" : "text")}
               >
                 <Type />
               </ToolbarButton>
               <ToolbarButton
-                className={toolsButtonClass(tool === "counter")}
+                pressed={tool === "counter"}
                 label="カウンター"
                 onClick={() => onToolChange(tool === "counter" ? "select" : "counter")}
               >
                 <ListOrdered />
               </ToolbarButton>
               <ToolbarButton
-                className={toolsButtonClass(tool === "mosaic")}
+                pressed={tool === "mosaic"}
                 label="モザイク"
                 onClick={() => onToolChange(tool === "mosaic" ? "select" : "mosaic")}
               >
                 <Grid2x2 />
               </ToolbarButton>
               <ToolbarButton
-                className={toolsButtonClass(tool === "marker")}
+                pressed={tool === "marker"}
                 label="マーカー"
                 onClick={() => onToolChange(tool === "marker" ? "select" : "marker")}
               >
                 <Highlighter />
               </ToolbarButton>
-              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)] landscape:mx-0 landscape:my-0.5 landscape:h-px landscape:w-6" />
-              <ToolbarButton className={historyButtonClass} label="元に戻す" disabled={!canUndo} onClick={onUndo}>
+              <div className={dividerClass} />
+              <ToolbarButton label="元に戻す" disabled={!canUndo} onClick={onUndo}>
                 <Undo2 />
               </ToolbarButton>
-              <ToolbarButton className={historyButtonClass} label="やり直す" disabled={!canRedo} onClick={onRedo}>
+              <ToolbarButton label="やり直す" disabled={!canRedo} onClick={onRedo}>
                 <Redo2 />
               </ToolbarButton>
-              <ToolbarButton className={historyButtonClass} label="リセット" disabled={!canReset} onClick={onReset}>
+              <ToolbarButton label="リセット" disabled={!canReset} onClick={onReset}>
                 <RotateCcw />
               </ToolbarButton>
-              <div className="mx-0.5 h-6 w-px shrink-0 bg-[var(--border)] landscape:mx-0 landscape:my-0.5 landscape:h-px landscape:w-6" />
+              <div className={dividerClass} />
               <ToolbarButton
-                className={exportButtonClass}
+               
                 label="ダウンロード"
                 disabled={!canExport || exporting}
                 onClick={onDownload}
@@ -339,7 +282,7 @@ export function Toolbar({
                 <Download />
               </ToolbarButton>
               <ToolbarButton
-                className={exportButtonClass}
+               
                 label="コピー"
                 disabled={!canExport || exporting}
                 onClick={onCopy}

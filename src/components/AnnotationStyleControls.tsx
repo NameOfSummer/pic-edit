@@ -33,10 +33,9 @@ export function AnnotationStyleControls({ style, onChange, label = "注釈" }: P
               aria-label={`色 ${color}`}
               aria-pressed={selected}
               className={cn(
-                "size-6 rounded-full border-2 transition-transform duration-100 enabled:active:scale-90",
-                selected ? "border-black scale-110" : "border-[var(--border)] hover:border-black",
+                "neu-swatch size-[22px]",
                 (color.toLowerCase() === "#ffffff" || color.toLowerCase() === "#fff100") &&
-                  "shadow-[inset_0_0_0_1px_var(--border)]",
+                  "outline -outline-offset-1 outline-black/15",
               )}
               style={{ backgroundColor: color }}
               onClick={() => onChange({ color })}
@@ -51,7 +50,7 @@ export function AnnotationStyleControls({ style, onChange, label = "注釈" }: P
         />
       </div>
 
-      <div className="h-6 w-px shrink-0 bg-[var(--border)] landscape:h-px landscape:w-6" />
+      <div className="neu-divider h-6 w-px landscape:h-px landscape:w-6" />
 
       <div className="flex items-center gap-1.5 landscape:flex-col" role="group" aria-label={`${label}の太さ`}>
         <StyleFieldLabel>太さ</StyleFieldLabel>
@@ -64,19 +63,14 @@ export function AnnotationStyleControls({ style, onChange, label = "注釈" }: P
               title={`${width}px`}
               aria-label={`太さ ${width}px`}
               aria-pressed={selected}
-              className={cn(
-                "flex h-8 w-9 items-center justify-center rounded-md border-2 transition-[background-color,border-color,transform] duration-100 enabled:active:scale-95",
-                selected
-                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                  : "border-[var(--border)] bg-white text-black hover:border-[var(--brand)]",
-              )}
+              className="neu-button flex h-8 w-9 items-center justify-center"
               onClick={() => onChange({ strokeWidth: width })}
             >
               <span
                 className="block w-5 rounded-full"
                 style={{
                   height: Math.max(2, width),
-                  backgroundColor: selected ? "#ffffff" : style.color,
+                  backgroundColor: style.color,
                 }}
               />
             </button>

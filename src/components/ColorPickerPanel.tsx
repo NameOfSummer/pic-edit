@@ -37,7 +37,7 @@ const GRAYSCALE = buildGrayscaleRow();
 const CHROMATIC = buildChromaticGrid();
 
 /**
- * macOS 風のカラーピッカー本体（グリッド・スペクトル・HEX）。
+ * カラーピッカー本体（グリッド・スペクトル・HEX）。ツールバーと同じニューモーフィック表現で描く。
  * @param props 現在色と変更コールバック
  * @returns {JSX.Element} ピッカーパネル
  */
@@ -47,11 +47,11 @@ export function ColorPickerPanel({ value, onChange, onEyedropper }: Props) {
 
   return (
     <div
-      className="w-[260px] rounded-xl border border-black/10 bg-white p-3 shadow-xl"
+      className="neu-panel w-[260px] p-3.5"
       onPointerDown={(event) => event.stopPropagation()}
     >
       <div
-        className="mb-3 grid grid-cols-2 rounded-lg bg-[#ececec] p-0.5 text-[11px] font-medium text-[#3a3a3a]"
+        className="mb-3 grid grid-cols-2 gap-1 rounded-full p-1 text-[11px] font-medium shadow-neu-inset"
         role="tablist"
         aria-label="カラーピッカーの表示"
       >
@@ -64,10 +64,10 @@ export function ColorPickerPanel({ value, onChange, onEyedropper }: Props) {
               role="tab"
               aria-selected={selected}
               className={cn(
-                "rounded-md px-1 py-1.5 transition-[background-color,box-shadow,color]",
+                "rounded-full px-1 py-1 transition-[box-shadow,color] duration-150",
                 selected
-                  ? "bg-white text-black shadow-sm"
-                  : "text-[#5c5c5c] hover:text-black",
+                  ? "bg-background text-foreground shadow-neu-raised"
+                  : "text-muted-foreground hover:text-foreground",
               )}
               onClick={() => setTab(item.id)}
             >
@@ -77,7 +77,8 @@ export function ColorPickerPanel({ value, onChange, onEyedropper }: Props) {
         })}
       </div>
 
-      <div style={{ height: PANEL_BODY_HEIGHT }}>
+      {/* 色面は凹んだ枠に収める（高さは枠込みで固定） */}
+      <div className="rounded-[14px] p-1.5 shadow-neu-inset" style={{ height: PANEL_BODY_HEIGHT }}>
         {tab === "grid" ? (
           <GridView value={hex} onChange={onChange} />
         ) : (
@@ -85,20 +86,20 @@ export function ColorPickerPanel({ value, onChange, onEyedropper }: Props) {
         )}
       </div>
 
-      <div className="mt-2 flex items-center gap-2 border-t border-black/8 pt-2">
+      <div className="mt-3 flex items-center gap-2">
         {onEyedropper ? (
           <button
             type="button"
             title="画像や注釈から色を取得"
             aria-label="スポイトで色を取得"
-            className="flex size-7 shrink-0 items-center justify-center rounded-md border border-black/10 bg-[#f7f7f7] text-[#333] transition-colors hover:border-black/25 hover:bg-white"
+            className="neu-button flex size-8 shrink-0 items-center justify-center"
             onClick={onEyedropper}
           >
             <Pipette className="size-3.5" strokeWidth={2} />
           </button>
         ) : null}
         <span
-          className="size-7 shrink-0 rounded-md border border-black/10 shadow-sm"
+          className="size-8 shrink-0 rounded-[12px] shadow-neu-raised outline -outline-offset-1 outline-black/10"
           style={{ backgroundColor: hex }}
           aria-hidden
         />
@@ -119,7 +120,7 @@ function GridView({ value, onChange }: Props) {
   return (
     <div className="flex h-full flex-col gap-1" role="listbox" aria-label="色グリッド">
       <div
-        className="grid h-7 shrink-0 overflow-hidden rounded-md"
+        className="grid h-7 shrink-0 overflow-hidden rounded-[8px]"
         style={{ gridTemplateColumns: `repeat(${COLOR_GRID_COLS}, minmax(0, 1fr))` }}
       >
         {GRAYSCALE.map((color) => (
@@ -132,7 +133,7 @@ function GridView({ value, onChange }: Props) {
         ))}
       </div>
       <div
-        className="grid min-h-0 flex-1 overflow-hidden rounded-md"
+        className="grid min-h-0 flex-1 overflow-hidden rounded-[8px]"
         style={{
           gridTemplateColumns: `repeat(${COLOR_GRID_COLS}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${COLOR_GRID_ROWS}, minmax(0, 1fr))`,
@@ -224,7 +225,7 @@ function SpectrumView({ value, onChange }: Props) {
       aria-label="スペクトル"
       aria-valuetext={value}
       tabIndex={0}
-      className="relative h-full cursor-crosshair touch-none overflow-hidden rounded-md"
+      className="relative h-full cursor-crosshair touch-none overflow-hidden rounded-[8px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
       style={{
         background: `
           linear-gradient(to bottom, #ffffff 0%, transparent 45%, rgba(0,0,0,0.55) 100%),
@@ -270,7 +271,7 @@ function HexField({ value, onChange }: { value: string; onChange: (color: string
       spellCheck={false}
       value={draft}
       aria-label="HEX カラー"
-      className="h-7 min-w-0 flex-1 rounded-md border border-black/10 bg-[#f7f7f7] px-2 font-mono text-[12px] uppercase outline-none focus:border-black/30"
+      className="h-8 min-w-0 flex-1 rounded-[12px] bg-background px-3 font-mono text-[12px] uppercase shadow-neu-inset-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onChange={(event) => {
         const next = event.target.value;
         setDraft(next);
