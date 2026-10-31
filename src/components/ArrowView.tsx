@@ -1,7 +1,7 @@
 import { useEffect, useRef, type PointerEvent } from "react";
 import { SELECTION_CHROME_Z } from "@/components/BoxSelectionChrome";
 import type { ArrowAnnotation, ArrowPatch } from "@/editor/types";
-import { arrowHeadPoints } from "@/editor/arrowGeometry";
+import { arrowHeadLength, arrowHeadPoints } from "@/editor/arrowGeometry";
 import { cn } from "@/lib/utils";
 
 /** 矢印表示コンポーネントのプロパティ。 */
@@ -94,7 +94,7 @@ export function ArrowView({ arrow, selected = false, interactive, onSelect, onCh
   const dx = arrow.x2 - arrow.x1;
   const dy = arrow.y2 - arrow.y1;
   const length = Math.max(1, Math.hypot(dx, dy));
-  const headLength = Math.max(12, arrow.strokeWidth * 3.2);
+  const headLength = arrowHeadLength(arrow.strokeWidth);
   const shaftEnd = toLocal(
     arrow.x1 + (dx / length) * Math.max(0, length - headLength * 0.85),
     arrow.y1 + (dy / length) * Math.max(0, length - headLength * 0.85),
