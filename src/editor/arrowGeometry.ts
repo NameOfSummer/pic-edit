@@ -9,6 +9,51 @@ export function arrowLength(arrow: Pick<ArrowAnnotation, "x1" | "y1" | "x2" | "y
   return Math.hypot(arrow.x2 - arrow.x1, arrow.y2 - arrow.y1);
 }
 
+/** 頭部（正三角形）の 1 辺の長さを、線の太さに対する倍率で表したもの。 */
+const HEAD_SIDE_RATIO = 2;
+/** 頭部の 1 辺の最小値（px）。細い矢印でも頭が見えるようにする。 */
+const HEAD_SIDE_MIN = 14;
+
+/**
+ * 太さに応じた矢印頭部（正三角形）の 1 辺の長さを返す。
+ * @param strokeWidth 線の太さ（px）
+ * @returns {number} 1 辺の長さ（px）
+ */
+function arrowHeadSide(strokeWidth: number): number {
+  return Math.max(HEAD_SIDE_MIN, strokeWidth * HEAD_SIDE_RATIO);
+}
+
+/**
+ * 太さに応じた矢印頭部の長さ（正三角形の高さ）を返す。
+ * @param strokeWidth 線の太さ（px）
+ * @returns {number} 頭部の長さ（px）
+ */
+export function arrowHeadLength(strokeWidth: number): number {
+  return arrowHeadSide(strokeWidth) * (Math.sqrt(3) / 2);
+}
+
+/**
+ * 太さに応じた矢印頭部の半幅（中心線から片側の幅）を返す。
+ * @param strokeWidth 線の太さ（px）
+ * @returns {number} 頭部の半幅（px）
+ */
+export function arrowHeadHalfWidth(strokeWidth: number): number {
+  return arrowHeadSide(strokeWidth) / 2;
+}
+
+/**
+ * 矢印の胴体（線）の終点を返す。胴体は頭部の底辺で止める（丸い線端は頭部の内側に収まる）。
+ * @param arrow 始点・終点・太さ
+ * @returns {Point} 胴体の終点
+ */
+export function arrowShaftEnd(arrow: Pick<ArrowAnnotation, "x1" | "y1" | "x2" | "y2" | "strokeWidth">): Point {
+  const dx = arrow.x2 - arrow.x1;
+  const dy = arrow.y2 - arrow.y1;
+  const length = Math.max(1, Math.hypot(dx, dy));
+  const shaftLength = Math.max(0, length - arrowHeadLength(arrow.strokeWidth));
+  return { x: arrow.x1 + (dx / length) * shaftLength, y: arrow.y1 + (dy / length) * shaftLength };
+}
+
 /**
  * 矢印頭部の先端と左右の底点を返す。
  * @param arrow 始点・終点・太さ
@@ -22,8 +67,8 @@ export function arrowHeadPoints(
   const length = Math.max(1, Math.hypot(dx, dy));
   const ux = dx / length;
   const uy = dy / length;
-  const headLength = Math.max(12, arrow.strokeWidth * 3.2);
-  const headWidth = Math.max(8, arrow.strokeWidth * 2.4);
+  const headLength = arrowHeadLength(arrow.strokeWidth);
+  const headWidth = arrowHeadHalfWidth(arrow.strokeWidth);
   const baseX = arrow.x2 - ux * headLength;
   const baseY = arrow.y2 - uy * headLength;
   return [
@@ -72,24 +117,15 @@ export function drawArrowOnCanvas(
 ): void {
   const x1 = (arrow.x1 - offsetX) * scale;
   const y1 = (arrow.y1 - offsetY) * scale;
-  const x2 = (arrow.x2 - offsetX) * scale;
-  const y2 = (arrow.y2 - offsetY) * scale;
   const strokeWidth = Math.max(1, arrow.strokeWidth * scale);
-  const scaled: ArrowAnnotation = {
-    ...arrow,
-    x1,
-    y1,
-    x2,
-    y2,
-    strokeWidth,
-  };
-  const [tip, left, right] = arrowHeadPoints(scaled);
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.max(1, Math.hypot(dx, dy));
-  const headLength = Math.max(12, strokeWidth * 3.2);
-  const shaftEndX = x1 + (dx / length) * Math.max(0, length - headLength * 0.85);
-  const shaftEndY = y1 + (dy / length) * Math.max(0, length - headLength * 0.85);
+  // 頭部と胴体の終点は画面上の座標で求めてから倍率をかける（画面表示と形を一致させるため）
+  const [tip, left, right] = arrowHeadPoints(arrow).map((point) => ({
+    x: (point.x - offsetX) * scale,
+    y: (point.y - offsetY) * scale,
+  }));
+  const shaftEnd = arrowShaftEnd(arrow);
+  const shaftEndX = (shaftEnd.x - offsetX) * scale;
+  const shaftEndY = (shaftEnd.y - offsetY) * scale;
 
   ctx.save();
   ctx.strokeStyle = arrow.color;

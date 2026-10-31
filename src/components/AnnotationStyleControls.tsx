@@ -1,7 +1,15 @@
+import { Minus, Plus } from "lucide-react";
 import { ColorPickerButton } from "@/components/ColorPickerButton";
 import { StyleFieldLabel } from "@/components/StyleFieldLabel";
 import { isPresetColor } from "@/lib/color";
-import { ANNOTATION_COLORS, ANNOTATION_STROKE_WIDTHS, type AnnotationStyle } from "@/editor/types";
+import {
+  ANNOTATION_COLORS,
+  ANNOTATION_STROKE_MAX,
+  ANNOTATION_STROKE_MIN,
+  ANNOTATION_STROKE_STEP,
+  ANNOTATION_STROKE_WIDTHS,
+  type AnnotationStyle,
+} from "@/editor/types";
 import { cn } from "@/lib/utils";
 
 /** 注釈の色・線幅コントロールのプロパティ。 */
@@ -18,6 +26,18 @@ type Props = {
  */
 export function AnnotationStyleControls({ style, onChange, label = "注釈" }: Props) {
   const customColor = !isPresetColor(style.color, ANNOTATION_COLORS);
+  const canThinner = style.strokeWidth > ANNOTATION_STROKE_MIN;
+  const canThicker = style.strokeWidth < ANNOTATION_STROKE_MAX;
+
+  /**
+   * 太さを一定幅だけ増減する（下限・上限で止める）。
+   * @param direction 太くするなら 1、細くするなら -1
+   * @returns {void}
+   */
+  function stepStrokeWidth(direction: 1 | -1): void {
+    const next = style.strokeWidth + direction * ANNOTATION_STROKE_STEP;
+    onChange({ strokeWidth: Math.min(ANNOTATION_STROKE_MAX, Math.max(ANNOTATION_STROKE_MIN, next)) });
+  }
 
   return (
     <div className="flex items-center gap-3 landscape:flex-col" onPointerDown={(event) => event.stopPropagation()}>
@@ -76,6 +96,36 @@ export function AnnotationStyleControls({ style, onChange, label = "注釈" }: P
             </button>
           );
         })}
+        {/* プリセットより太く／細かく調整するステッパー。縦並びのときは＋を上にする */}
+        <div className="ml-1 flex items-center gap-1 landscape:mt-1 landscape:ml-0 landscape:flex-col-reverse">
+          <button
+            type="button"
+            title="細くする"
+            aria-label={`${label}を細くする`}
+            disabled={!canThinner}
+            className="neu-button flex size-7 items-center justify-center [&_svg]:size-3.5"
+            onClick={() => stepStrokeWidth(-1)}
+          >
+            <Minus />
+          </button>
+          <span
+            className="w-7 text-center font-heading text-xs font-medium tabular-nums"
+            aria-live="polite"
+            aria-label={`太さ ${style.strokeWidth}px`}
+          >
+            {style.strokeWidth}
+          </span>
+          <button
+            type="button"
+            title="太くする"
+            aria-label={`${label}を太くする`}
+            disabled={!canThicker}
+            className="neu-button flex size-7 items-center justify-center [&_svg]:size-3.5"
+            onClick={() => stepStrokeWidth(1)}
+          >
+            <Plus />
+          </button>
+        </div>
       </div>
     </div>
   );

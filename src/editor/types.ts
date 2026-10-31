@@ -257,6 +257,12 @@ export const ANNOTATION_COLORS = [
 
 /** 矢印・枠の太さの選択肢（px）。 */
 export const ANNOTATION_STROKE_WIDTHS = [2, 4, 6, 10] as const;
+/** 矢印・枠の太さの下限（px）。 */
+export const ANNOTATION_STROKE_MIN = 2;
+/** 矢印・枠の太さの上限（px）。 */
+export const ANNOTATION_STROKE_MAX = 40;
+/** ＋／− で太さを増減する幅（px）。 */
+export const ANNOTATION_STROKE_STEP = 2;
 
 /**
  * 注釈色の旧名。値は ANNOTATION_COLORS と同じ。
