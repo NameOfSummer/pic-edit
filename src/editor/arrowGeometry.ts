@@ -11,6 +11,17 @@ export function arrowLength(arrow: Pick<ArrowAnnotation, "x1" | "y1" | "x2" | "y
 
 /** 頭部（正三角形）の 1 辺の長さを、線の太さに対する倍率で表したもの。 */
 const HEAD_SIDE_RATIO = 2;
+/** 頭部の 1 辺の最小値（px）。細い矢印でも頭が見えるようにする。 */
+const HEAD_SIDE_MIN = 14;
+
+/**
+ * 太さに応じた矢印頭部（正三角形）の 1 辺の長さを返す。
+ * @param strokeWidth 線の太さ（px）
+ * @returns {number} 1 辺の長さ（px）
+ */
+function arrowHeadSide(strokeWidth: number): number {
+  return Math.max(HEAD_SIDE_MIN, strokeWidth * HEAD_SIDE_RATIO);
+}
 
 /**
  * 太さに応じた矢印頭部の長さ（正三角形の高さ）を返す。
@@ -18,7 +29,7 @@ const HEAD_SIDE_RATIO = 2;
  * @returns {number} 頭部の長さ（px）
  */
 export function arrowHeadLength(strokeWidth: number): number {
-  return strokeWidth * HEAD_SIDE_RATIO * (Math.sqrt(3) / 2);
+  return arrowHeadSide(strokeWidth) * (Math.sqrt(3) / 2);
 }
 
 /**
@@ -27,7 +38,7 @@ export function arrowHeadLength(strokeWidth: number): number {
  * @returns {number} 頭部の半幅（px）
  */
 export function arrowHeadHalfWidth(strokeWidth: number): number {
-  return (strokeWidth * HEAD_SIDE_RATIO) / 2;
+  return arrowHeadSide(strokeWidth) / 2;
 }
 
 /**
