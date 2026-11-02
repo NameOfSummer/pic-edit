@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Popover } from "radix-ui";
 import { ColorPickerPanel } from "@/components/ColorPickerPanel";
 import { useEyedropper } from "@/editor/EyedropperContext";
+import { useCloseOnOutsidePointerDown } from "@/editor/useCloseOnOutsidePointerDown";
 import { toHexColor } from "@/lib/color";
 
 /** カラーピッカーボタンのプロパティ。 */
@@ -30,11 +31,15 @@ export function ColorPickerButton({
   const hex = toHexColor(value);
   const eyedropper = useEyedropper();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useCloseOnOutsidePointerDown(open, triggerRef, () => setOpen(false));
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
         <button
+          ref={triggerRef}
           type="button"
           title={label}
           aria-label={label}
