@@ -156,7 +156,6 @@ export function drawMarkerOnCanvas(
 
   ctx.save();
   ctx.globalAlpha = MARKER_OPACITY;
-  ctx.globalCompositeOperation = "multiply";
   ctx.fillStyle = marker.color;
   ctx.translate((x1 + x2) / 2, (y1 + y2) / 2);
   ctx.rotate(Math.atan2(y2 - y1, x2 - x1));
