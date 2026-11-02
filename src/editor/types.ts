@@ -124,6 +124,30 @@ export const TEXT_FONT_SIZES = [16, 24, 32, 48, 64] as const;
 /** 新規テキストの初期文字列。 */
 export const DEFAULT_TEXT_CONTENT = "テキスト";
 
+/** 書き出しの背景色と余白。 */
+export type ExportSettings = {
+  /** Export area 内と PNG の背景色。`"transparent"` でなし */
+  backgroundColor: string;
+  /** 外接矩形の周囲に足す余白（画面上の px） */
+  padding: number;
+};
+
+/** 書き出し背景色の初期値。 */
+export const DEFAULT_EXPORT_BACKGROUND = "#000000";
+/** 書き出し背景色の選択肢。 */
+export const EXPORT_BACKGROUND_COLORS = [
+  { color: "#000000", label: "黒" },
+  { color: "#FFFFFF", label: "白" },
+] as const;
+/** 書き出し余白の選択肢（px）。 */
+export const EXPORT_PADDING_PRESETS = [0, 12, 24, 48, 96] as const;
+/** 書き出し余白の下限（px）。 */
+export const EXPORT_PADDING_MIN = 0;
+/** 書き出し余白の上限（px）。 */
+export const EXPORT_PADDING_MAX = 200;
+/** ステッパーで増減する書き出し余白の幅（px）。 */
+export const EXPORT_PADDING_STEP = 4;
+
 /**
  * 背景なしとして扱う色か判定する。
  * @param color 背景色。未指定も背景なし

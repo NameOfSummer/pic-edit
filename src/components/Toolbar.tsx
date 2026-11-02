@@ -16,12 +16,22 @@ import {
   X,
 } from "lucide-react";
 import { AnnotationStyleControls } from "@/components/AnnotationStyleControls";
+import { BackgroundColorControl } from "@/components/BackgroundColorControl";
 import { CounterStyleControls } from "@/components/CounterStyleControls";
+import { ExportPaddingControl } from "@/components/ExportPaddingControl";
 import { MarkerStyleControls } from "@/components/MarkerStyleControls";
 import { MosaicStyleControls } from "@/components/MosaicStyleControls";
 import { TextStyleControls } from "@/components/TextStyleControls";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { AnnotationStyle, CounterStyle, EditorTool, MarkerStyle, MosaicStyle, TextStyle } from "@/editor/types";
+import type {
+  AnnotationStyle,
+  CounterStyle,
+  EditorTool,
+  ExportSettings,
+  MarkerStyle,
+  MosaicStyle,
+  TextStyle,
+} from "@/editor/types";
 
 /** ツールバー全体のプロパティ。 */
 type Props = {
@@ -43,6 +53,8 @@ type Props = {
   mosaicStyle: MosaicStyle;
   markerStyle: MarkerStyle;
   annotationStyleLabel: string;
+  exportSettings: ExportSettings;
+  onExportSettingsChange: (patch: Partial<ExportSettings>) => void;
   onToolChange: (tool: EditorTool) => void;
   onAnnotationStyleChange: (patch: Partial<AnnotationStyle>) => void;
   onTextStyleChange: (patch: Partial<TextStyle>) => void;
@@ -148,6 +160,8 @@ export function Toolbar({
   mosaicStyle,
   markerStyle,
   annotationStyleLabel,
+  exportSettings,
+  onExportSettingsChange,
   onToolChange,
   onAnnotationStyleChange,
   onTextStyleChange,
@@ -163,6 +177,8 @@ export function Toolbar({
   onApplyCrop,
   onCancelCrop,
 }: Props) {
+  const popoverSide = useLandscape() ? "left" : "top";
+
   return (
     <TooltipProvider>
       <div
@@ -262,6 +278,17 @@ export function Toolbar({
               >
                 <Highlighter />
               </ToolbarButton>
+              <div className={dividerClass} />
+              <BackgroundColorControl
+                value={exportSettings.backgroundColor}
+                side={popoverSide}
+                onChange={(backgroundColor) => onExportSettingsChange({ backgroundColor })}
+              />
+              <ExportPaddingControl
+                value={exportSettings.padding}
+                side={popoverSide}
+                onChange={(padding) => onExportSettingsChange({ padding })}
+              />
               <div className={dividerClass} />
               <ToolbarButton label="元に戻す" disabled={!canUndo} onClick={onUndo}>
                 <Undo2 />

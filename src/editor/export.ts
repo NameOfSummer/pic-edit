@@ -5,17 +5,19 @@ import { drawMosaicOnCanvas, getMosaicBounds } from "./mosaicGeometry";
 import { drawRectOnCanvas, getRectBounds } from "./rectGeometry";
 import { drawTextOnCanvas, getTextBounds } from "./textGeometry";
 import { loadHtmlImage } from "./images";
-import type {
-  ArrowAnnotation,
-  CounterAnnotation,
-  ImageLayer,
-  MarkerAnnotation,
-  MosaicAnnotation,
-  RectAnnotation,
-  TextAnnotation,
+import {
+  isTransparentBackground,
+  type ArrowAnnotation,
+  type CounterAnnotation,
+  type ExportSettings,
+  type ImageLayer,
+  type MarkerAnnotation,
+  type MosaicAnnotation,
+  type RectAnnotation,
+  type TextAnnotation,
 } from "./types";
 
-/** 書き出し画像の周囲に足す余白（px）。 */
+/** 書き出し画像の周囲に足す余白の初期値（px）。 */
 export const EXPORT_PADDING_PX = 12;
 
 /** 画面座標での外接矩形。 */
@@ -246,14 +248,14 @@ function normalizeScene(doc: SceneDocument) {
 }
 
 /**
- * 画面表示と同じ重ね順でシーンをオフスクリーン合成する。市松は描かず透明背景。
+ * 画面表示と同じ重ね順でシーンをオフスクリーン合成する。市松は描かない。
  * @param doc 画像と注釈
- * @param options 倍率と余白。省略時は元解像度相当と既定余白
+ * @param options 倍率・余白・背景色。省略時は元解像度相当・既定余白・透明
  * @returns {Promise<{ canvas: HTMLCanvasElement; bounds: Bounds } | null>} 中身が空なら null
  */
 export async function renderSceneToCanvas(
   doc: SceneDocument,
-  options: { scale?: number; padding?: number } = {},
+  options: { scale?: number; padding?: number; backgroundColor?: string } = {},
 ): Promise<{ canvas: HTMLCanvasElement; bounds: Bounds } | null> {
   const scene = normalizeScene(doc);
   const padding = options.padding ?? EXPORT_PADDING_PX;
@@ -324,11 +326,20 @@ export async function renderSceneToCanvas(
     drawMarkerOnCanvas(ctx, marker, bounds.minX, bounds.minY, scale);
   }
 
+  // 先に塗るとマーカーの multiply とモザイクの画素読み取りに背景色が混ざり、画面表示と食い違うので最後に最背面へ敷く
+  const { backgroundColor } = options;
+  if (backgroundColor && !isTransparentBackground(backgroundColor)) {
+    ctx.globalCompositeOperation = "destination-over";
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = "source-over";
+  }
+
   return { canvas, bounds };
 }
 
 /**
- * 透明背景・元解像度相当の PNG を作る。市松模様は描かない。
+ * 元解像度相当の PNG を作る。市松模様は描かない。
  * @param layers 画像
  * @param arrows 矢印
  * @param rects 枠
@@ -336,6 +347,7 @@ export async function renderSceneToCanvas(
  * @param counters カウンター
  * @param mosaics モザイク
  * @param markers マーカー
+ * @param settings 背景色と余白。省略時は透明背景・既定余白
  * @returns {Promise<Blob>} PNG
  */
 export async function renderLayersToPngBlob(
@@ -346,10 +358,15 @@ export async function renderLayersToPngBlob(
   counters: CounterAnnotation[] = [],
   mosaics: MosaicAnnotation[] = [],
   markers: MarkerAnnotation[] = [],
+  settings: Partial<ExportSettings> = {},
 ): Promise<Blob> {
   const rendered = await renderSceneToCanvas(
     { layers, arrows, rects, texts, counters, mosaics, markers },
-    { scale: getExportScale(layers), padding: EXPORT_PADDING_PX },
+    {
+      scale: getExportScale(layers),
+      padding: settings.padding ?? EXPORT_PADDING_PX,
+      backgroundColor: settings.backgroundColor,
+    },
   );
   if (!rendered) {
     throw new Error("書き出す画像がありません");
@@ -431,6 +448,7 @@ export function formatExportFilenameForLayers(layers: ImageLayer[], date = new D
  * @param counters カウンター
  * @param mosaics モザイク
  * @param markers マーカー
+ * @param settings 背景色と余白。省略時は透明背景・既定余白
  * @param filename 保存名。省略時は元ファイル名、なければ日時名
  * @returns {Promise<void>}
  */
@@ -442,9 +460,10 @@ export async function downloadLayersAsPng(
   counters: CounterAnnotation[] = [],
   mosaics: MosaicAnnotation[] = [],
   markers: MarkerAnnotation[] = [],
+  settings: Partial<ExportSettings> = {},
   filename?: string,
 ): Promise<void> {
-  const blob = await renderLayersToPngBlob(layers, arrows, rects, texts, counters, mosaics, markers);
+  const blob = await renderLayersToPngBlob(layers, arrows, rects, texts, counters, mosaics, markers, settings);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -462,6 +481,7 @@ export async function downloadLayersAsPng(
  * @param counters カウンター
  * @param mosaics モザイク
  * @param markers マーカー
+ * @param settings 背景色と余白。省略時は透明背景・既定余白
  * @returns {Promise<void>}
  */
 export async function copyLayersAsPng(
@@ -472,8 +492,9 @@ export async function copyLayersAsPng(
   counters: CounterAnnotation[] = [],
   mosaics: MosaicAnnotation[] = [],
   markers: MarkerAnnotation[] = [],
+  settings: Partial<ExportSettings> = {},
 ): Promise<void> {
-  const blob = await renderLayersToPngBlob(layers, arrows, rects, texts, counters, mosaics, markers);
+  const blob = await renderLayersToPngBlob(layers, arrows, rects, texts, counters, mosaics, markers, settings);
   if (!navigator.clipboard?.write) {
     throw new Error("このブラウザでは画像のコピーに対応していません");
   }
