@@ -41,7 +41,7 @@ import {
   shiftAnnotationClipboard,
   type AnnotationClipboard,
 } from "@/editor/annotationClipboard";
-import { copyLayersAsPng, downloadLayersAsPng, getExportBounds } from "@/editor/export";
+import { copyLayersAsPng, downloadLayersAsPng, EXPORT_PADDING_PX, getExportBounds } from "@/editor/export";
 import { createHistoryController, type EditorSnapshot } from "@/editor/history";
 import { normalizeRectFromDrag } from "@/editor/rectGeometry";
 import { getTextBoxSize, MIN_TEXT_BOX_HEIGHT, MIN_TEXT_BOX_WIDTH } from "@/editor/textGeometry";
@@ -57,6 +57,7 @@ import {
   DEFAULT_ANNOTATION_STROKE,
   DEFAULT_COUNTER_COLOR,
   DEFAULT_COUNTER_SIZE,
+  DEFAULT_EXPORT_BACKGROUND,
   DEFAULT_MARKER_COLOR,
   DEFAULT_MARKER_STROKE,
   DEFAULT_MOSAIC_BLOCK,
@@ -64,10 +65,12 @@ import {
   DEFAULT_TEXT_COLOR,
   DEFAULT_TEXT_SIZE,
   DEFAULT_TEXT_WEIGHT,
+  isTransparentBackground,
   type AnnotationStyle,
   type CounterStyle,
   type CropRect,
   type EditorTool,
+  type ExportSettings,
   type ImageLayer,
   type MarkerStyle,
   type MosaicStyle,
@@ -103,6 +106,10 @@ export function Editor() {
   const [canPasteImage, setCanPasteImage] = useState(true);
   const [canPasteInternal, setCanPasteInternal] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportSettings, setExportSettings] = useState<ExportSettings>({
+    backgroundColor: DEFAULT_EXPORT_BACKGROUND,
+    padding: EXPORT_PADDING_PX,
+  });
   const [tool, setTool] = useState<EditorTool>("select");
   const [draftArrow, setDraftArrow] = useState<DraftLine | null>(null);
   const [draftRect, setDraftRect] = useState<DraftLine | null>(null);
@@ -591,9 +598,9 @@ export function Editor() {
       setExporting(true);
       try {
         if (action === "download") {
-          await downloadLayersAsPng(layers, arrows, rects, texts, counters, mosaics, markers);
+          await downloadLayersAsPng(layers, arrows, rects, texts, counters, mosaics, markers, exportSettings);
         } else {
-          await copyLayersAsPng(layers, arrows, rects, texts, counters, mosaics, markers);
+          await copyLayersAsPng(layers, arrows, rects, texts, counters, mosaics, markers, exportSettings);
           toast.success("クリップボードにコピーしました", {
             duration: 1000,
             position: "top-right",
@@ -606,7 +613,7 @@ export function Editor() {
         setExporting(false);
       }
     },
-    [arrows, canExport, counters, exporting, layers, markers, mosaics, rects, texts],
+    [arrows, canExport, counters, exporting, exportSettings, layers, markers, mosaics, rects, texts],
   );
 
   const onAnnotationStyleChange = useCallback(
@@ -1206,7 +1213,16 @@ export function Editor() {
   const draftMosaicBox = draftMosaic
     ? normalizeRectFromDrag(draftMosaic.x1, draftMosaic.y1, draftMosaic.x2, draftMosaic.y2)
     : null;
-  const exportBounds = getExportBounds(layers, arrows, rects, texts, counters, mosaics, markers);
+  const exportBounds = getExportBounds(
+    layers,
+    arrows,
+    rects,
+    texts,
+    counters,
+    mosaics,
+    markers,
+    exportSettings.padding,
+  );
 
   return (
     <EyedropperContext.Provider value={{ startEyedropper }}>
@@ -1347,6 +1363,20 @@ export function Editor() {
 
           {exportBounds && (
             <>
+              {!isTransparentBackground(exportSettings.backgroundColor) && (
+                <div
+                  className="pointer-events-none absolute"
+                  style={{
+                    left: exportBounds.minX,
+                    top: exportBounds.minY,
+                    width: exportBounds.maxX - exportBounds.minX,
+                    height: exportBounds.maxY - exportBounds.minY,
+                    backgroundColor: exportSettings.backgroundColor,
+                    zIndex: 0,
+                  }}
+                  aria-hidden="true"
+                />
+              )}
               <div
                 className="pointer-events-none absolute box-border border border-black/25"
                 style={{
@@ -1757,6 +1787,8 @@ export function Editor() {
             mosaicStyle={activeMosaicStyle}
             markerStyle={activeMarkerStyle}
             annotationStyleLabel={annotationStyleLabel}
+            exportSettings={exportSettings}
+            onExportSettingsChange={(patch) => setExportSettings((current) => ({ ...current, ...patch }))}
             onToolChange={(next) => {
               setTool(next);
               setDraftArrow(null);

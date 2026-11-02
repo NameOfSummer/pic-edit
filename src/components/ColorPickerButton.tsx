@@ -11,6 +11,8 @@ type Props = {
   /** プリセット以外の色が選ばれているとき true */
   active?: boolean;
   label?: string;
+  /** スポイト開始時に呼ぶ。ポップオーバーの中で使うときに親を閉じる */
+  onEyedropperStart?: () => void;
 };
 
 /**
@@ -23,6 +25,7 @@ export function ColorPickerButton({
   onChange,
   active = false,
   label = "自由な色を選ぶ",
+  onEyedropperStart,
 }: Props) {
   const hex = toHexColor(value);
   const eyedropper = useEyedropper();
@@ -81,6 +84,7 @@ export function ColorPickerButton({
               eyedropper
                 ? () => {
                     setOpen(false);
+                    onEyedropperStart?.();
                     eyedropper.startEyedropper(onChange);
                   }
                 : undefined
