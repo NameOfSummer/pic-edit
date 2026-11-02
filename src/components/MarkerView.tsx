@@ -110,7 +110,6 @@ export function MarkerView({ marker, selected = false, interactive, onSelect, on
           fill={marker.color}
           opacity={MARKER_OPACITY}
           transform={`rotate(${angle} ${centerX} ${centerY})`}
-          style={{ mixBlendMode: "multiply" }}
           className={interactive ? "cursor-move" : undefined}
           onPointerDown={onMovePointerDown}
         />

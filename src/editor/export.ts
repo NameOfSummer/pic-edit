@@ -326,7 +326,7 @@ export async function renderSceneToCanvas(
     drawMarkerOnCanvas(ctx, marker, bounds.minX, bounds.minY, scale);
   }
 
-  // 先に塗るとマーカーの multiply とモザイクの画素読み取りに背景色が混ざり、画面表示と食い違うので最後に最背面へ敷く
+  // 先に塗るとモザイクの画素読み取りに背景色が混ざり、画面表示と食い違うので最後に最背面へ敷く
   const { backgroundColor } = options;
   if (backgroundColor && !isTransparentBackground(backgroundColor)) {
     ctx.globalCompositeOperation = "destination-over";
