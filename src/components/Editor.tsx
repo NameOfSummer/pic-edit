@@ -41,8 +41,9 @@ import {
   shiftAnnotationClipboard,
   type AnnotationClipboard,
 } from "@/editor/annotationClipboard";
-import { copyLayersAsPng, downloadLayersAsPng, EXPORT_PADDING_PX, getExportBounds } from "@/editor/export";
+import { copyLayersAsPng, downloadLayersAsPng, getExportBounds } from "@/editor/export";
 import { createHistoryController, type EditorSnapshot } from "@/editor/history";
+import { loadEditorPreferences, saveEditorPreferences } from "@/editor/preferences";
 import { normalizeRectFromDrag } from "@/editor/rectGeometry";
 import { getTextBoxSize, MIN_TEXT_BOX_HEIGHT, MIN_TEXT_BOX_WIDTH } from "@/editor/textGeometry";
 import { useArrows } from "@/editor/useArrows";
@@ -53,18 +54,7 @@ import { useMosaics } from "@/editor/useMosaics";
 import { useRects } from "@/editor/useRects";
 import { useTexts } from "@/editor/useTexts";
 import {
-  DEFAULT_ANNOTATION_COLOR,
-  DEFAULT_ANNOTATION_STROKE,
-  DEFAULT_COUNTER_COLOR,
-  DEFAULT_COUNTER_SIZE,
-  DEFAULT_EXPORT_BACKGROUND,
-  DEFAULT_MARKER_COLOR,
-  DEFAULT_MARKER_STROKE,
-  DEFAULT_MOSAIC_BLOCK,
   DEFAULT_TEXT_BACKGROUND,
-  DEFAULT_TEXT_COLOR,
-  DEFAULT_TEXT_SIZE,
-  DEFAULT_TEXT_WEIGHT,
   isTransparentBackground,
   type AnnotationStyle,
   type CounterStyle,
@@ -106,36 +96,19 @@ export function Editor() {
   const [canPasteImage, setCanPasteImage] = useState(true);
   const [canPasteInternal, setCanPasteInternal] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [exportSettings, setExportSettings] = useState<ExportSettings>({
-    backgroundColor: DEFAULT_EXPORT_BACKGROUND,
-    padding: EXPORT_PADDING_PX,
-  });
+  // 前回使ったスタイルと書き出し設定を、初回描画時に一度だけ読み込む
+  const [initialPreferences] = useState(loadEditorPreferences);
+  const [exportSettings, setExportSettings] = useState<ExportSettings>(initialPreferences.export);
   const [tool, setTool] = useState<EditorTool>("select");
   const [draftArrow, setDraftArrow] = useState<DraftLine | null>(null);
   const [draftRect, setDraftRect] = useState<DraftLine | null>(null);
   const [draftMosaic, setDraftMosaic] = useState<DraftLine | null>(null);
   const [draftMarker, setDraftMarker] = useState<DraftLine | null>(null);
-  const [annotationStyle, setAnnotationStyle] = useState<AnnotationStyle>({
-    color: DEFAULT_ANNOTATION_COLOR,
-    strokeWidth: DEFAULT_ANNOTATION_STROKE,
-  });
-  const [textStyle, setTextStyle] = useState<TextStyle>({
-    color: DEFAULT_TEXT_COLOR,
-    backgroundColor: DEFAULT_TEXT_BACKGROUND,
-    fontSize: DEFAULT_TEXT_SIZE,
-    fontWeight: DEFAULT_TEXT_WEIGHT,
-  });
-  const [counterStyle, setCounterStyle] = useState<CounterStyle>({
-    color: DEFAULT_COUNTER_COLOR,
-    size: DEFAULT_COUNTER_SIZE,
-  });
-  const [mosaicStyle, setMosaicStyle] = useState<MosaicStyle>({
-    blockSize: DEFAULT_MOSAIC_BLOCK,
-  });
-  const [markerStyle, setMarkerStyle] = useState<MarkerStyle>({
-    color: DEFAULT_MARKER_COLOR,
-    strokeWidth: DEFAULT_MARKER_STROKE,
-  });
+  const [annotationStyle, setAnnotationStyle] = useState<AnnotationStyle>(initialPreferences.annotation);
+  const [textStyle, setTextStyle] = useState<TextStyle>(initialPreferences.text);
+  const [counterStyle, setCounterStyle] = useState<CounterStyle>(initialPreferences.counter);
+  const [mosaicStyle, setMosaicStyle] = useState<MosaicStyle>(initialPreferences.mosaic);
+  const [markerStyle, setMarkerStyle] = useState<MarkerStyle>(initialPreferences.marker);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [eyedropperSession, setEyedropperSession] = useState<{
     sampler: SceneColorSampler;
@@ -1001,6 +974,18 @@ export function Editor() {
       exitCrop();
     }
   }, [selectedId, exitCrop]);
+
+  // スタイルや書き出し設定が変わったら、次回起動時に復元できるよう localStorage と同期する
+  useEffect(() => {
+    saveEditorPreferences({
+      annotation: annotationStyle,
+      text: textStyle,
+      counter: counterStyle,
+      mosaic: mosaicStyle,
+      marker: markerStyle,
+      export: exportSettings,
+    });
+  }, [annotationStyle, textStyle, counterStyle, mosaicStyle, markerStyle, exportSettings]);
 
   useEffect(() => {
     const endGesture = () => {
