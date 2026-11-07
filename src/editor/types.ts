@@ -133,11 +133,12 @@ export type ExportSettings = {
 };
 
 /** 書き出し背景色の初期値。 */
-export const DEFAULT_EXPORT_BACKGROUND = "#000000";
+export const DEFAULT_EXPORT_BACKGROUND = "#B6B6B6";
 /** 書き出し背景色の選択肢。 */
 export const EXPORT_BACKGROUND_COLORS = [
   { color: "#000000", label: "黒" },
   { color: "#FFFFFF", label: "白" },
+  { color: "#B6B6B6", label: "グレー" },
 ] as const;
 /** 書き出し余白の選択肢（px）。 */
 export const EXPORT_PADDING_PRESETS = [0, 12, 24, 48, 96] as const;
@@ -190,7 +191,7 @@ export const COUNTER_SIZES = [28, 36, 48] as const;
 /** 矢印・枠の色の初期値。 */
 export const DEFAULT_ANNOTATION_COLOR = "#32CD32";
 /** 矢印・枠の太さの初期値（px）。 */
-export const DEFAULT_ANNOTATION_STROKE = 4;
+export const DEFAULT_ANNOTATION_STROKE = 6;
 /** カウンター色の初期値。 */
 export const DEFAULT_COUNTER_COLOR = DEFAULT_ANNOTATION_COLOR;
 
@@ -216,7 +217,7 @@ export type MosaicStyle = {
 };
 
 /** モザイクのブロックサイズ初期値（px）。 */
-export const DEFAULT_MOSAIC_BLOCK = 12;
+export const DEFAULT_MOSAIC_BLOCK = 8;
 /** モザイク粗さの選択肢（px）。 */
 export const MOSAIC_BLOCK_SIZES = [8, 12, 16, 24] as const;
 
@@ -251,7 +252,7 @@ export const MARKER_COLORS = [
 /** マーカー太さの選択肢（px）。 */
 export const MARKER_STROKE_WIDTHS = [12, 20, 28, 36] as const;
 /** マーカー色の初期値。 */
-export const DEFAULT_MARKER_COLOR = MARKER_COLORS[0];
+export const DEFAULT_MARKER_COLOR = MARKER_COLORS[3];
 /** マーカー太さの初期値（px）。 */
 export const DEFAULT_MARKER_STROKE = 20;
 /** マーカー描画時の不透明度。 */
